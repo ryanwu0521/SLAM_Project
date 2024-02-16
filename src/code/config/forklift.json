@@ -1,0 +1,12 @@
+{
+    "name":"forklift",
+    "usd_path":"/home/grntmtz/Desktop/qual_simulation/src/theia_isaac/robots/forklift/forklift.usd",
+    "prim_path":"/World/forklift",
+    "articulation_root":"/World/forklift",
+    "linear_speed":1,
+    "angular_speed":60,
+    "controller_type":"default",
+    "goal_color":[0,0,1,1],
+    "next_color":[0,0,0.5,0.5],
+    "height_offset": 0.0
+}

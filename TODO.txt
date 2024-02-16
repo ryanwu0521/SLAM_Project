@@ -1,0 +1,7 @@
+Create standard Djikstra's controller 
+Create local trajectory from global planner
+Create perception pipeline sim (via raycast check)
+Create particle filter
+Create particle filter visual debugger
+Create TDSP controller
+Run Tests comparing the results from the 2
