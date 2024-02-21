@@ -1,6 +1,6 @@
 {
     "name":"forklift",
-    "usd_path":"/home/grntmtz/Desktop/qual_simulation/src/theia_isaac/robots/forklift/forklift.usd",
+    "usd_path":"omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/forklift/forklift.usd",
     "prim_path":"/World/forklift",
     "articulation_root":"/World/forklift",
     "linear_speed":1,

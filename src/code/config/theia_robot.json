@@ -1,6 +1,6 @@
 {
     "name":"theia_robot",
-    "usd_path":"src/theia_isaac/robots/theia_robot/theia_robot.usd",
+    "usd_path":"omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/theia_robot/theia_robot.usd",
     "prim_path":"/World/theia_robot",
     "articulation_root":"/World/theia_robot/static/articulation_link",
     "linear_speed":1,

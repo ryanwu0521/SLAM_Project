@@ -163,7 +163,7 @@ class QualSimulationHandler:
 
     def load_stage(self):
         #TODO: Parameterize usd_path
-        usd_path = "/home/grntmtz/Desktop/qual_simulation/src/theia_isaac/world/test_world_1.usd"
+        usd_path = "omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/world/test_world_1.usd"
 
         # make sure the file exists before we try to open it
         try:

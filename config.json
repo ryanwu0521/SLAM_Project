@@ -1,3 +1,4 @@
 {
-    "isaac_path":"/home/grntmtz/.local/share/ov/pkg/isaac_sim-2023.1.1"
+    "isaac_path":"/home/gmetts/.local/share/ov/pkg/isaac_sim-2023.1.1",
+    "asset_path":"omniverse://cerlabnucleus.lan.local.cmu.edu"
 }
