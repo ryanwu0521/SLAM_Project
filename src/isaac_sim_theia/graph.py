@@ -78,8 +78,8 @@ class TraversalEdge():
         self.node1 = node1
         self.node2 = node2
 
-        self.default_color =  (1,0,0,.25)
-        self.draw_color     = (1,0,0,.25)
+        self.default_color =  (1.0,0.0,0.0,.25)
+        self.draw_color     = (1.0,0.0,0.0,.25)
         self.draw_size      = 5
 
         self.base_cost  = 0
@@ -140,8 +140,8 @@ class TraversalNode():
         self.key   = node['key']
 
         self.draw_height = draw_height
-        self.default_color = (1,1,1,.5)
-        self.draw_color    = self.default_color
+        self.default_color = (1.0,1.0,1.0,.5)
+        self.draw_color    = (1.0,1.0,1.0,.5)
         self.draw_size     = 20
 
         self.visited = False
