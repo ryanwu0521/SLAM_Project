@@ -14,8 +14,8 @@ __version__ = "0.0.1"
 #   reproducible builds (https://github.com/pybind/python_example/pull/53)
 
 ext_modules = [
-    Pybind11Extension("isaac_sim_thiea",
-        ["cpp_src/cpp_mcl_acceleration.cpp"],
+    Pybind11Extension("test2",
+        ["src/isaac_sim_theia/pybind11/test2.cpp"],
         # Example: passing in the version to the compiled code
         define_macros = [('VERSION_INFO', __version__)],
         ),
