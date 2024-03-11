@@ -1,8 +1,7 @@
 // TraversalNode.cpp
 
-#include "TraversalNode.hpp"
-#include "TraversalEdge.hpp"
-
+#include "include/TraversalNode.hpp"
+#include "include/TraversalEdge.hpp"
 TraversalNode::TraversalNode(const Json::Value& node) {
     x = node["x"].asDouble();
     y = node["y"].asDouble();

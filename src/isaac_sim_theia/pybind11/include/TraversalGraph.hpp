@@ -17,7 +17,7 @@ public:
     void validate_nodes();
     TraversalEdge *get_closest_edge(std::vector<double>& position);
 
-private:
+// private:
     std::vector<TraversalNode *> nodes;
     std::vector<TraversalEdge *> edges;
 };

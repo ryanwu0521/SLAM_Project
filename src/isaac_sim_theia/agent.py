@@ -1,6 +1,6 @@
 from omni.isaac.core.prims import XFormPrim
 import omni.isaac.core.utils.stage as stage_utils
-import graph as g
+import cTheia as g
 import json
 import random
 import numpy as np

@@ -1,15 +1,13 @@
 // TraversalGraph.cpp
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+
 #include "../jsoncpp/json/json.h"
-#include "TraversalGraph.hpp"
-#include "TraversalNode.hpp"
-#include "TraversalEdge.hpp"
+#include "include/TraversalGraph.hpp"
+#include "include/TraversalNode.hpp"
+#include "include/TraversalEdge.hpp"
 
 #include <iostream>
 #include <fstream>
 
-namespace py = pybind11;
 
 TraversalGraph::TraversalGraph(std::string file_string) {
     load_file(file_string);
@@ -92,22 +90,3 @@ TraversalEdge *TraversalGraph::get_closest_edge(std::vector<double>& position) {
 }
 
 
-PYBIND11_MODULE(TraversalGraph, m) {
-    py::class_<TraversalEdge>(m, "TraversalEdge")
-        .def(py::init<TraversalNode*, TraversalNode*>())
-        .def("get_distance_from", &TraversalEdge::get_distance_from)
-        .def("reset_color", &TraversalEdge::reset_color);
-
-    py::class_<TraversalNode>(m, "TraversalNode")
-        .def(py::init<const Json::Value&>())
-        .def("get_position", &TraversalNode::get_position)
-        .def("reset_color", &TraversalNode::reset_color)
-        .def("add_edge", &TraversalNode::add_edge);
-
-    py::class_<TraversalGraph>(m, "TraversalGraph")
-        .def(py::init<std::string>())
-        .def("load_file", &TraversalGraph::load_file)
-        .def("add_edge", &TraversalGraph::add_edge)
-        .def("validate_nodes", &TraversalGraph::validate_nodes)
-        .def("get_closest_edge", &TraversalGraph::get_closest_edge);
-}

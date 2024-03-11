@@ -13,7 +13,7 @@ import carb
 import sys
 import random
 
-import graph
+import cTheia as g
 import agent
 import theia 
 import time 
@@ -25,7 +25,7 @@ class QualSimulationHandler:
         #TODO: Add in functionality to choose world
         self.kit = kit
         self.draw = _debug_draw.acquire_debug_draw_interface()
-        self.graph = graph.TraversalGraph('src/code/graphs/test_world_1_graph.json')
+        self.graph = g.TraversalGraph('src/isaac_sim_theia/graphs/test_world_1_graph.json')
         self.load_stage()
 
         self.world = World()
@@ -35,17 +35,17 @@ class QualSimulationHandler:
 
         omni.timeline.get_timeline_interface().play()
 
-        self.forklift_1   = agent.Agent(self.graph,"src/code/config/forklift.json",self.world) 
+        # self.forklift_1   = agent.Agent(self.graph,"src/isaac_sim_theia/config/forklift.json",self.world) 
         # self.forklift_1.randomize_position()
         # self.forklift_1.randomize_goal()
-        self.forklift_1.set_position_to_node(self.graph.nodes[0],0)
-        self.forklift_1.set_goal(self.graph.nodes[48])
-        self.forklift_1.randomize_position()
+        # self.forklift_1.set_position_to_node(self.graph.nodes[0],0)
+        # self.forklift_1.set_goal(self.graph.nodes[48])
+        # self.forklift_1.randomize_position()
 
-        self.theia_1  = theia.Theia(self.graph,"src/code/config/theia_robot.json",self.world)
-        self.theia_1.set_position_to_node(self.graph.nodes[5],180)
-        self.theia_1.set_goal(self.graph.nodes[53])
-        self.theia_1.randomize_position()
+        # self.theia_1  = theia.Theia(self.graph,"src/isaac_sim_theia/config/theia_robot.json",self.world)
+        # self.theia_1.set_position_to_node(self.graph.nodes[5],180)
+        # self.theia_1.set_goal(self.graph.nodes[53])
+        # self.theia_1.randomize_position()
 
         # while self.theia_1.current_node == self.forklift_1.current_node: #making sure they aren't overlapping to start
         #     self.theia_1.randomize_position()
@@ -65,14 +65,21 @@ class QualSimulationHandler:
             self.theia_1.tracked_objects[0].particle_filter.draw_particles(self.world.current_time + i,(1,(i)/t,0,.05))
 
     def draw_update(self):
-        # self.graph.draw_graph()
+        #TODO: Consider compiling draw list first to limit calls
+        self.draw_graph()
         # if self.theia_1.tracked_objects[0].particle_filter != None:
         #     self.theia_1.tracked_objects[0].particle_filter.draw_particles(self.world.current_time + 8)
-        self.draw_path()
-        self.draw_goal()
+        # self.draw_path()
+        # self.draw_goal()
         # self.draw_cool_filter(10)
-        self.draw_simple_robots()
+        # self.draw_simple_robots()
         pass
+    
+    def draw_graph(self):
+        for node in  self.graph.nodes:
+            self.draw.draw_points([node.get_position()],[node.draw_color],[node.draw_size])
+        for edge in  self.graph.edges:
+            self.draw.draw_lines([edge.node1.get_position()],[edge.node2.get_position()],[edge.draw_color],[edge.draw_size])
 
     def draw_goal(self):
         if self.theia_1.current_node == None or self.forklift_1.current_node == None:
@@ -194,25 +201,25 @@ class QualSimulationHandler:
 
     def spin_once(self):
         self.draw_update()
-        self.forklift_1.spin_once()
-        self.theia_1.spin_once()
+        # self.forklift_1.spin_once()
+        # self.theia_1.spin_once()
 
-        if np.sqrt((self.theia_1.current_pose.position[0]-self.forklift_1.current_pose.position[0])**2+(self.theia_1.current_pose.position[1]-self.forklift_1.current_pose.position[1])**2) < 1:
-            #TODO:Cleanup this implementation
-            self.theia_1.clear_goal()
-            self.theia_1.clear_next_node()
-            # self.theia_1 = agent.Agent(self.graph,"/home/grntmtz/Desktop/qual_simulation/src/code/config/theia_robot.json",self.world)
-            self.theia_1 = theia.Theia(self.graph,"src/code/config/theia_robot.json",self.world)
-            self.theia_1.randomize_position()
+        # if np.sqrt((self.theia_1.current_pose.position[0]-self.forklift_1.current_pose.position[0])**2+(self.theia_1.current_pose.position[1]-self.forklift_1.current_pose.position[1])**2) < 1:
+        #     #TODO:Cleanup this implementation
+        #     self.theia_1.clear_goal()
+        #     self.theia_1.clear_next_node()
+        #     # self.theia_1 = agent.Agent(self.graph,"/home/grntmtz/Desktop/qual_simulation/src/isaac_sim_theia/config/theia_robot.json",self.world)
+        #     self.theia_1 = theia.Theia(self.graph,"src/isaac_sim_theia/config/theia_robot.json",self.world)
+        #     self.theia_1.randomize_position()
 
-            while self.theia_1.current_node == self.forklift_1.current_node: #making sure they aren't overlapping to start
-                self.theia_1.randomize_position()
+        #     while self.theia_1.current_node == self.forklift_1.current_node: #making sure they aren't overlapping to start
+        #         self.theia_1.randomize_position()
 
-            self.theia_1.randomize_goal()
-            while self.theia_1.goal_node == self.forklift_1.goal_node: #making sure that they aren't routing to the exact same node
-                self.theia_1.randomize_goal()
-            print("collision detected")
-            self.log_collision_to_file("results/tdsp1.txt")
+        #     self.theia_1.randomize_goal()
+        #     while self.theia_1.goal_node == self.forklift_1.goal_node: #making sure that they aren't routing to the exact same node
+        #         self.theia_1.randomize_goal()
+        #     print("collision detected")
+        #     self.log_collision_to_file("results/tdsp1.txt")
             #TODO:Log collision
 
         self.kit.update()

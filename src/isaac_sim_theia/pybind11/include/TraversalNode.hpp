@@ -19,7 +19,7 @@ public:
     double y;
     int key;
 
-private:
+// private:
     std::vector<TraversalEdge*> edges;
     double draw_height;
     std::vector<double> default_color;

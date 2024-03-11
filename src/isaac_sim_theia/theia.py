@@ -2,7 +2,7 @@ from omni.isaac.core.prims import XFormPrim
 from omni.isaac.debug_draw import _debug_draw
 
 import omni.isaac.core.utils.stage as stage_utils
-import graph as g
+import cTheia as g
 import agent as a
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Slerp

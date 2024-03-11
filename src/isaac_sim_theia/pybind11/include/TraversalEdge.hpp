@@ -16,7 +16,7 @@ public:
     TraversalNode* node1;
     TraversalNode* node2;
 
-private:
+// private:
     std::vector<double> default_color;
     std::vector<double> draw_color;
     int draw_size;

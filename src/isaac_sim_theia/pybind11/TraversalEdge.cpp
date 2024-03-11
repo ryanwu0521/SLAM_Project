@@ -1,6 +1,6 @@
 // TraversalEdge.cpp
 
-#include "TraversalEdge.hpp"
+#include "include/TraversalEdge.hpp"
 
 TraversalEdge::TraversalEdge(TraversalNode* node1, TraversalNode* node2) {
     this->node1 = node1;
