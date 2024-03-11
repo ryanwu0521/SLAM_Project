@@ -185,7 +185,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         pq.put(CompPath(best_cost,best_path))
 
         fnode = None
-
         while fnode != self.goal_node:
             if pq.empty():
                 raise Exception("Failed to find path due to empty priority queue")
@@ -194,7 +193,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
             best_path = temp.path
 
             fnode = best_path[-1]
-
             start_pose = None
             if len(best_path) == 1:
                 start_pose = Pose(position=fnode.get_position(),orientation=self.current_pose.orientation)
@@ -204,6 +202,7 @@ class Agent():#Note, one day this probably should just be an inherited class fro
 
 
             fnode.visited = True
+
             for edge in fnode.edges:
                 #skip visited nodes
                 onode = edge.get_connected_node(fnode)
@@ -230,7 +229,7 @@ class Agent():#Note, one day this probably should just be an inherited class fro
            
 class Pose():
     def __init__(self,position=np.array([0,0,0]),orientation=R.identity()) -> None:
-        self.position    = position
+        self.position    = np.array(position)
         self.orientation = orientation
 
     def __eq__(self, __value: object) -> bool:
@@ -261,7 +260,7 @@ class Pose():
         self.set_heading_from_angle(math.atan2(delta_pos[1],delta_pos[0]),degrees=False) 
 
     def set_heading_from_origin(self,origin):
-        delta_pos = self.position-origin
+        delta_pos = self.position-np.array(origin)
         self.set_heading_from_angle(math.atan2(delta_pos[1],delta_pos[0]),degrees=False)
 
     def randomize_orientation(self):

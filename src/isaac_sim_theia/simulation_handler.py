@@ -35,12 +35,12 @@ class QualSimulationHandler:
 
         omni.timeline.get_timeline_interface().play()
 
-        # self.forklift_1   = agent.Agent(self.graph,"src/isaac_sim_theia/config/forklift.json",self.world) 
-        # self.forklift_1.randomize_position()
-        # self.forklift_1.randomize_goal()
-        # self.forklift_1.set_position_to_node(self.graph.nodes[0],0)
-        # self.forklift_1.set_goal(self.graph.nodes[48])
-        # self.forklift_1.randomize_position()
+        self.forklift_1   = agent.Agent(self.graph,"src/isaac_sim_theia/config/forklift.json",self.world) 
+        self.forklift_1.randomize_position()
+        self.forklift_1.randomize_goal()
+        self.forklift_1.set_position_to_node(self.graph.nodes[0],0)
+        self.forklift_1.set_goal(self.graph.nodes[48])
+        self.forklift_1.randomize_position()
 
         # self.theia_1  = theia.Theia(self.graph,"src/isaac_sim_theia/config/theia_robot.json",self.world)
         # self.theia_1.set_position_to_node(self.graph.nodes[5],180)
@@ -77,9 +77,10 @@ class QualSimulationHandler:
     
     def draw_graph(self):
         for node in  self.graph.nodes:
-            self.draw.draw_points([node.get_position()],[node.draw_color],[node.draw_size])
+            print(node.draw_color)
+            self.draw.draw_points([np.array(node.get_position())],[np.array(node.draw_color)],[node.draw_size])
         for edge in  self.graph.edges:
-            self.draw.draw_lines([edge.node1.get_position()],[edge.node2.get_position()],[edge.draw_color],[edge.draw_size])
+            self.draw.draw_lines([np.array(edge.node1.get_position())],[np.array(edge.node2.get_position())],[np.array(edge.draw_color)],[edge.draw_size])
 
     def draw_goal(self):
         if self.theia_1.current_node == None or self.forklift_1.current_node == None:
@@ -201,7 +202,7 @@ class QualSimulationHandler:
 
     def spin_once(self):
         self.draw_update()
-        # self.forklift_1.spin_once()
+        self.forklift_1.spin_once()
         # self.theia_1.spin_once()
 
         # if np.sqrt((self.theia_1.current_pose.position[0]-self.forklift_1.current_pose.position[0])**2+(self.theia_1.current_pose.position[1]-self.forklift_1.current_pose.position[1])**2) < 1:
