@@ -4,11 +4,14 @@
 
 namespace py = pybind11;
 
+//TODO: Need to trim back exposure to only what is necessary and make some things private
+
 PYBIND11_MODULE(cTheia, m) {
-    py::class_<TraversalEdge>(m, "TraversalEdge")
-        .def(py::init<TraversalNode*, TraversalNode*>())
+    py::class_<TraversalEdge, std::shared_ptr<TraversalEdge>>(m, "TraversalEdge")
+        .def(py::init<std::shared_ptr<TraversalNode>, std::shared_ptr<TraversalNode>>())
         .def("get_distance_from", &TraversalEdge::get_distance_from)
         .def("reset_color", &TraversalEdge::reset_color)
+        .def("get_connected_node", &TraversalEdge::get_connected_node)
         .def_readwrite("node1",&TraversalEdge::node1)
         .def_readwrite("node2",&TraversalEdge::node2)
         .def_readwrite("default_color",&TraversalEdge::default_color)
@@ -19,7 +22,7 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readwrite("dist",&TraversalEdge::dist);
 
 
-    py::class_<TraversalNode>(m, "TraversalNode")
+    py::class_<TraversalNode, std::shared_ptr<TraversalNode>>(m, "TraversalNode")
         .def(py::init<const Json::Value&>())
         .def("get_position", &TraversalNode::get_position)
         .def("reset_color", &TraversalNode::reset_color)

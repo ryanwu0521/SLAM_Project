@@ -2,14 +2,30 @@
 
 #include "include/TraversalEdge.hpp"
 
-TraversalEdge::TraversalEdge(TraversalNode* node1, TraversalNode* node2) {
+TraversalEdge::TraversalEdge(std::shared_ptr<TraversalNode> node1, std::shared_ptr<TraversalNode> node2) {
     this->node1 = node1;
     this->node2 = node2;
+
     default_color = {1.0, 0.0, 0.0, 0.25};
     draw_color = default_color;
     draw_size = 5;
     base_cost = 0;
     dist = sqrt(pow(node1->x - node2->x, 2) + pow(node1->y - node2->y, 2));
+}
+
+std::shared_ptr<TraversalNode> TraversalEdge::get_connected_node(std::shared_ptr<TraversalNode> node) {
+    if (node->key == node1->key) {
+        return node2;
+    }
+    if (node->key == node2->key) {
+        return node1;
+    }
+    throw std::runtime_error("Node not part of edge");
+}
+
+void TraversalEdge::link_nodes(){
+    node1->add_edge(this->shared_from_this());
+    node2->add_edge(this->shared_from_this());
 }
 
 double TraversalEdge::get_distance_from(const std::vector<double>& position) {

@@ -21,11 +21,11 @@ void TraversalNode::reset_color() {
     draw_color = default_color;
 }
 
-void TraversalNode::add_edge(TraversalEdge* new_edge) {
+void TraversalNode::add_edge(std::shared_ptr<TraversalEdge> new_edge) {
     for (auto edge : edges) {
-        if (new_edge->node1 == this && (edge->node1 == new_edge->node2 || edge->node2 == new_edge->node2)) {
+        if (new_edge->node1.get() == this && (edge->node1.get() == new_edge->node2.get() || edge->node2.get() == new_edge->node2.get())) {
             throw std::runtime_error("Attempted to add duplicate edge");
-        } else if (new_edge->node2 == this && (edge->node1 == new_edge->node1 || edge->node2 == new_edge->node1)) {
+        } else if (new_edge->node2.get() == this && (edge->node1.get() == new_edge->node1.get() || edge->node2.get() == new_edge->node1.get())) {
             throw std::runtime_error("Attempted to add duplicate edge");
         }
     }

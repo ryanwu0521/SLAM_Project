@@ -15,11 +15,11 @@ public:
     void load_file(std::string file_string);
     void add_edge(const Json::Value& edge);
     void validate_nodes();
-    TraversalEdge *get_closest_edge(std::vector<double>& position);
+    std::shared_ptr<TraversalEdge> get_closest_edge(std::vector<double>& position);
 
 // private:
-    std::vector<TraversalNode *> nodes;
-    std::vector<TraversalEdge *> edges;
+    std::vector<std::shared_ptr<TraversalNode>> nodes; //need to make shared ptr
+    std::vector<std::shared_ptr<TraversalEdge>> edges; //need to make shared ptr
 };
 
 #endif // TRAVERSAL_GRAPH_HPP

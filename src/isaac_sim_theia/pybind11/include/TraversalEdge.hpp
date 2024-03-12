@@ -7,14 +7,16 @@
 #include <cmath>
 #include <vector>
 
-class TraversalEdge {
+class TraversalEdge : public std::enable_shared_from_this<TraversalEdge> {
 public:
-    TraversalEdge(TraversalNode* node1, TraversalNode* node2);
+    TraversalEdge(std::shared_ptr<TraversalNode> node1, std::shared_ptr<TraversalNode> node2);
     double get_distance_from(const std::vector<double>& position);
     void reset_color();
-
-    TraversalNode* node1;
-    TraversalNode* node2;
+    std::shared_ptr<TraversalNode> get_connected_node(std::shared_ptr<TraversalNode> node);
+    void link_nodes();
+    
+    std::shared_ptr<TraversalNode> node1;
+    std::shared_ptr<TraversalNode> node2;
 
 // private:
     std::vector<double> default_color;

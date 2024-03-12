@@ -33,7 +33,8 @@ void TraversalGraph::load_file(std::string file_string) {
     // Load nodes from JSON data
     const Json::Value& nodesJson = data["nodes"];
     for (const auto& nodeJson : nodesJson) {
-        nodes.push_back(new TraversalNode(nodeJson));
+        std::shared_ptr<TraversalNode> addNode = std::make_shared<TraversalNode>(nodeJson);
+        nodes.push_back(addNode);
     }
 
     // Validate nodes
@@ -57,11 +58,9 @@ void TraversalGraph::add_edge(const Json::Value& edge) {
     } else if (node1_key >= nodes.size() || node2_key >= nodes.size()) {
         throw std::runtime_error("Invalid key for node");
     }
-
-    TraversalNode *fnode1 = nodes[node1_key];
-    TraversalNode *fnode2 = nodes[node2_key];
-
-    edges.emplace_back(new TraversalEdge(fnode1, fnode2));
+    std::shared_ptr<TraversalEdge> temp = std::make_shared<TraversalEdge>(nodes[node1_key], nodes[node2_key]);
+    temp->link_nodes();
+    edges.emplace_back(std::make_shared<TraversalEdge>(nodes[node1_key], nodes[node2_key]));
 }
 
 void TraversalGraph::validate_nodes() {
@@ -72,9 +71,9 @@ void TraversalGraph::validate_nodes() {
     }
 }
 
-TraversalEdge *TraversalGraph::get_closest_edge(std::vector<double>& position) {
+std::shared_ptr<TraversalEdge> TraversalGraph::get_closest_edge(std::vector<double>& position) {
     double closest = std::numeric_limits<double>::infinity();
-    TraversalEdge *cedge = nullptr;
+    std::shared_ptr<TraversalEdge> cedge = nullptr;
 
     for (auto& edge : edges) {
         double d2e = edge->get_distance_from(position);
