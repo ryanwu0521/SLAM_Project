@@ -1,4 +1,3 @@
-
 import os
 import platform
 import json
@@ -37,8 +36,7 @@ def run_windows_system(args):
     file_path = os.getcwd() + "/" + args.file_path
     print(os.path.isfile(isaac_path + "/python.bat"))
     print([isaac_path+"/python.bat", " -m pip install ."])
-    subprocess.run([isaac_path+"/python.bat", "-m","pip","install","."])
-    subprocess.run([isaac_path+"/python.bat", file_path])
+    subprocess.run([isaac_path+"/python.bat", "-m","pip","uninstall","cTheia","-y"])
     exit()
 
 def run_linux_system(args):
@@ -78,13 +76,12 @@ def run_linux_system(args):
         print("Warning, this has only been tested for Isaac 2023")
 
     file_path = os.getcwd() + "/" + args.file_path
-    subprocess.run([isaac_path+"/python.sh", "-m","pip","install","."])
     subprocess.Popen(["bash", isaac_path+"/python.sh", file_path])
     exit()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--file_path", type=str,default="src/isaac_sim_theia/main.py",help="path to python script to run in isaac")
+    parser.add_argument("--file_path", type=str,default="src/code/main.py",help="path to python script to run in isaac")
     args = parser.parse_args()
     # print(os.getcwd()+"/"+args.file_path)
     python_ver = platform.python_version_tuple()
