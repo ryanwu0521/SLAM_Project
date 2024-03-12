@@ -78,6 +78,7 @@ def run_linux_system(args):
         print("Warning, this has only been tested for Isaac 2023")
 
     file_path = os.getcwd() + "/" + args.file_path
+    subprocess.run([isaac_path+"/python.sh", "-m","pip","install","."])
     subprocess.Popen(["bash", isaac_path+"/python.sh", file_path])
     exit()
 
