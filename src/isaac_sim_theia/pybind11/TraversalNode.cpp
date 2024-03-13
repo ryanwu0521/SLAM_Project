@@ -13,7 +13,7 @@ TraversalNode::TraversalNode(const Json::Value& node) {
     visited = false;
 }
 
-std::vector<double> TraversalNode::get_position() {
+std::array<double, 3> TraversalNode::get_position() {
     return {x, y, draw_height};
 }
 

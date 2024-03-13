@@ -18,7 +18,6 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readwrite("draw_color",&TraversalEdge::draw_color)
         .def_readwrite("draw_size",&TraversalEdge::draw_size)
         .def_readwrite("base_cost",&TraversalEdge::base_cost)
-        .def_readwrite("cost_table",&TraversalEdge::cost_table)
         .def_readwrite("dist",&TraversalEdge::dist);
 
 

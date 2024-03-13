@@ -32,6 +32,7 @@ void TraversalGraph::load_file(std::string file_string) {
 
     // Load nodes from JSON data
     const Json::Value& nodesJson = data["nodes"];
+    nodes.reserve(nodesJson.size());
     for (const auto& nodeJson : nodesJson) {
         std::shared_ptr<TraversalNode> addNode = std::make_shared<TraversalNode>(nodeJson);
         nodes.push_back(addNode);
@@ -42,6 +43,7 @@ void TraversalGraph::load_file(std::string file_string) {
 
     // Load edges from JSON data
     const Json::Value& edgesJson = data["edges"];
+    edges.reserve(edgesJson.size());
     for (const auto& edgeJson : edgesJson) {
         add_edge(edgeJson);
     }
@@ -71,7 +73,7 @@ void TraversalGraph::validate_nodes() {
     }
 }
 
-std::shared_ptr<TraversalEdge> TraversalGraph::get_closest_edge(std::vector<double>& position) {
+std::shared_ptr<TraversalEdge> TraversalGraph::get_closest_edge(std::array<double, 3>& position) {
     double closest = std::numeric_limits<double>::infinity();
     std::shared_ptr<TraversalEdge> cedge = nullptr;
 

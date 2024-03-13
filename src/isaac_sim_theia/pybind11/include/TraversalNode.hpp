@@ -11,7 +11,7 @@ class TraversalEdge; // Forward declaration
 class TraversalNode : public std::enable_shared_from_this<TraversalNode> {
 public:
     TraversalNode(const Json::Value& node);
-    std::vector<double> get_position();
+    std::array<double, 3> get_position();
     void reset_color();
     void add_edge(std::shared_ptr<TraversalEdge> new_edge);
 
@@ -22,8 +22,8 @@ public:
 // private:
     std::vector<std::shared_ptr<TraversalEdge>> edges;
     double draw_height;
-    std::vector<double> default_color;
-    std::vector<double> draw_color;
+    std::array<double, 4> default_color;
+    std::array<double, 4> draw_color;
     int draw_size;
     bool visited;
 };
