@@ -4,7 +4,6 @@ import cTheia as g
 import json
 import random
 import numpy as np
-import planner
 from queue import PriorityQueue
 import copy
 from scipy.spatial.transform import Rotation as R

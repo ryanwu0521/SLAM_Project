@@ -28,10 +28,10 @@ void TraversalEdge::link_nodes(){
     node2->add_edge(this->shared_from_this());
 }
 
-double TraversalEdge::get_distance_from(const std::vector<double>& position) {
-    std::vector<double> A = {node1->x, node1->y};
-    std::vector<double> B = {node2->x, node2->y};
-    std::vector<double> E = {position[0], position[1]};
+double TraversalEdge::get_distance_from(const std::array<double, 3>& position) {
+    double A[2] = {node1->x, node1->y};
+    double B[2] = {node2->x, node2->y};
+    double E[2] = {position[0], position[1]};
 
     std::vector<double> AB = {B[0] - A[0], B[1] - A[1]};
     std::vector<double> AE = {E[0] - A[0], E[1] - A[1]};
