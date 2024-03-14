@@ -138,6 +138,11 @@ std::array<double, 3> Rotation::as_euler(std::string order, bool degrees) const{
 
 // Static method to create a Rotation object from Euler angles
 Rotation Rotation::from_euler(std::string order, std::vector<double> values, bool degrees) {
+
+    if(order.length() != values.size()){
+        throw std::invalid_argument("Number of provided axis from input string " + order + " : " + std::to_string(order.length()) + " does not match number of provided angles " + std::to_string(values.size()));
+    }
+
     // Convert angles to radians if required
     if (degrees) {
         for (auto& angle : values) {
@@ -158,21 +163,27 @@ Rotation Rotation::from_euler(std::string order, std::vector<double> values, boo
         angles[0] = values[0];   // Roll
         angles[1] = values[2];   // Yaw
         angles[2] = values[1];   // Pitch
-    } else if (order == "YXZ" || order == "Y") {
+    } else if (order == "YXZ") {
         angles[0] = values[1];   // Pitch
         angles[1] = values[0];   // Roll
         angles[2] = values[2];   // Yaw
     } else if (order == "YZX") {
-        angles[0] = values[1];   // Pitch
-        angles[1] = values[2];   // Yaw
-        angles[2] = values[0];   // Roll
-    } else if (order == "ZXY" || order == "Z") {
-        angles[0] = values[2];   // Yaw
-        angles[1] = values[0];   // Roll
-        angles[2] = values[1];   // Pitch
+        angles[0] = values[2];   // Pitch
+        angles[1] = values[0];   // Yaw
+        angles[2] = values[1];   // Roll
+    } else if (order == "ZXY") {
+        angles[0] = values[1];   // Yaw
+        angles[1] = values[2];   // Roll
+        angles[2] = values[0];   // Pitch
     } else if (order == "ZYX") {
         angles[0] = values[2];   // Yaw
         angles[1] = values[1];   // Pitch
+        angles[2] = values[0];   // Roll
+    } else if (order == "X") {
+        angles[0] = values[0];   // Yaw
+    } else if (order == "Y") {
+        angles[1] = values[0];   // Pitch
+    } else if (order == "Z") {
         angles[2] = values[0];   // Roll
     } else {
         throw std::invalid_argument("Invalid Euler angle order");
@@ -193,17 +204,18 @@ Rotation Rotation::from_euler(std::string order, std::vector<double> values, boo
         throw std::runtime_error("Computed NaN values while converting Euler angles to quaternion");
     }
 
-    std::array<double, 4> q1 = {sr, 0.0, 0.0, cr}; // Quaternion for roll
-    std::array<double, 4> q2 = {0.0, sp, 0.0, cp}; // Quaternion for pitch
-    std::array<double, 4> q3 = {0.0, 0.0, sy, cy}; // Quaternion for yaw
+    std::array<double, 4> q;
 
-    // Combine the three rotations using quaternion multiplication
-    std::array<double, 4> combined_quaternion = multiply_quaternions(q1, multiply_quaternions(q2, q3));
+
+    q[3] = cr * cp * cy + sr * sp * sy; //w
+    q[0] = sr * cp * cy - cr * sp * sy; //x
+    q[1] = cr * sp * cy + sr * cp * sy; //y
+    q[2] = cr * cp * sy - sr * sp * cy; //z
 
     // Normalize the resulting quaternion to ensure it represents a valid rotation
-    combined_quaternion = normalize_quaternion(combined_quaternion);
+    q = normalize_quaternion(q);
 
-    return Rotation(combined_quaternion);
+    return Rotation(q);
 }
 
 
