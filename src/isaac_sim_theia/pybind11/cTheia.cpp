@@ -4,6 +4,7 @@
 #include "include/Slerp.hpp"
 #include "include/Rotation.hpp"
 #include "include/Pose.hpp"
+#include "include/Trajectory.hpp"
 
 namespace py = pybind11;
 
@@ -82,4 +83,18 @@ PYBIND11_MODULE(cTheia, m) {
         .def("set_orientation", &Pose::set_orientation)
         .def("set_position", &Pose::set_position);
 
+    py::class_<Trajectory>(m, "Trajectory")
+        .def(py::init<Pose, Pose, double, double, double, double>(),
+             py::arg("start_pose"), py::arg("end_pose"), py::arg("linear_speed"),
+             py::arg("angular_speed"), py::arg("start_time"), py::arg("wait_time") = 0.0)
+        .def("get_pose_at_time", &Trajectory::get_pose_at_time)
+        .def("is_finished", &Trajectory::is_finished)
+        .def_readonly("start_pose", &Trajectory::start_pose)
+        .def_readonly("end_pose", &Trajectory::end_pose)
+        .def_readonly("linear_speed", &Trajectory::linear_speed)
+        .def_readonly("angular_speed", &Trajectory::angular_speed)
+        .def_readonly("start_time", &Trajectory::start_time)
+        .def_readonly("wait_time", &Trajectory::wait_time)
+        .def_readonly("turn_time", &Trajectory::turn_time)
+        .def_readonly("end_time", &Trajectory::end_time);
 }
