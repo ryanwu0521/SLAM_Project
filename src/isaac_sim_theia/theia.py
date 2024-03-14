@@ -2,10 +2,10 @@ from omni.isaac.core.prims import XFormPrim
 from omni.isaac.debug_draw import _debug_draw
 
 import omni.isaac.core.utils.stage as stage_utils
-import cTheia as g
+import cTheia as c 
 import agent as a
-from scipy.spatial.transform import Rotation as R
-from scipy.spatial.transform import Slerp
+from cTheia import Rotation as R
+
 import scipy.stats as st
 
 from queue import PriorityQueue
@@ -19,7 +19,7 @@ class Theia(a.Agent):
     #class to initialize a forklift instance
     #Needs a behavior tree (new class)
     #Needs to own the particle filter (new class)
-    def __init__(self, fgraph:g.TraversalGraph, json_path:str, world) -> None:
+    def __init__(self, fgraph:c.TraversalGraph, json_path:str, world) -> None:
 
         super().__init__(fgraph,json_path,world)
         self.tracked_objects = []
@@ -265,7 +265,7 @@ class TrackedObject():
         return (self.particle_filter.calculate_cost(trajectory))**2 * self.avoidance_cost
     
 class ParticleFilter():
-    def __init__(self,dict,fgraph:g.TraversalGraph,pose:a.Pose,time:float) -> None: 
+    def __init__(self,dict,fgraph:c.TraversalGraph,pose:a.Pose,time:float) -> None: 
         #need array of particles 
 
         self.graph = fgraph

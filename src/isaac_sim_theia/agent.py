@@ -1,13 +1,14 @@
 from omni.isaac.core.prims import XFormPrim
 import omni.isaac.core.utils.stage as stage_utils
-import cTheia as g
+import cTheia as c 
 import json
 import random
 import numpy as np
 from queue import PriorityQueue
 import copy
-from scipy.spatial.transform import Rotation as R
-from scipy.spatial.transform import Slerp
+from cTheia import Rotation as R
+from cTheia import Slerp
+
 import math 
 import warnings
 
@@ -15,7 +16,7 @@ class Agent():#Note, one day this probably should just be an inherited class fro
 
     #Needs a behavior tree (new class)
     #Needs to own the particle filter (new class)
-    def __init__(self, fgraph:g.TraversalGraph, json_path:str, world):
+    def __init__(self, fgraph:c.TraversalGraph, json_path:str, world):
         file = open(json_path)
         self.data = json.load(file)
         self.world = world
@@ -38,7 +39,7 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         self.angular_speed = self.data["angular_speed"]
         self.height_offset = self.data["height_offset"] #TODO: replace with param
 
-        self.current_pose = Pose(np.array([0,0,0]),R.from_euler('z',0,degrees=True))
+        self.current_pose = Pose(np.array([0,0,0]),R.from_euler('z',[0],True))
         self.current_time = self.world.current_time
 
         stage_utils.add_reference_to_stage(self.usd_path,self.prim_path)
@@ -53,7 +54,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         self.current_pose.position = [self.current_node.x,self.current_node.y,0]
         self.current_pose.set_heading_from_angle(orientation)
         self.sync_world_pose()
-
 
     def randomize_position(self):
         rand_node = random.choice(self.graph.nodes)
@@ -77,7 +77,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         
         self.current_trajectory = Trajectory(start_pose=self.current_pose,end_pose=fend_pose,linear_speed=self.linear_speed,angular_speed=self.angular_speed,start_time=self.current_time)
         
-
     def generate_global_plan(self):
         if self.current_node == None and self.current_edge == None:
             raise Exception("Current location unknown, shouldn't be possible")
@@ -124,7 +123,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         
         self.next_node = None
 
-
     def randomize_goal(self):
 
         fgoal_node = random.choice(self.graph.nodes)
@@ -134,6 +132,7 @@ class Agent():#Note, one day this probably should just be an inherited class fro
             self.set_goal(fgoal_node)
     
     def sync_world_pose(self):
+        print(self.current_pose.orientation.as_quat())
         self.prim.set_world_pose(position = self.current_pose.position, orientation=self.current_pose.get_quat_scalar_first())
 
     def update_position(self):
@@ -162,7 +161,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
                 self.clear_goal()
             else:
                 self.set_next_node(self.global_plan.pop(0))
-
 
     def spin_once(self):
         #Holds all the necessary time step actions
@@ -246,13 +244,14 @@ class Pose():
         quat_s_first = np.zeros(4)
         quat_s_first[0] = quat_s_last[3]
         quat_s_first[1:] = quat_s_last[:3]
+        print(quat_s_first)
         return quat_s_first
 
     def get_quat_scalar_last(self):
         return self.orientation.as_quat()
 
     def set_heading_from_angle(self,angle,degrees=True):
-        self.orientation = R.from_euler('z',angle,degrees=degrees)
+        self.orientation = R.from_euler('z',[angle],degrees)
 
     def set_heading_to_destination(self,dest):
         delta_pos = dest-self.position
@@ -263,10 +262,10 @@ class Pose():
         self.set_heading_from_angle(math.atan2(delta_pos[1],delta_pos[0]),degrees=False)
 
     def randomize_orientation(self):
-        self.orientation = R.from_euler('z',random.randint(0,360),degrees=True)
+        self.orientation = R.from_euler('z',[random.randint(0,360)],True)
 
     def get_heading_from_orientation(self):
-        return self.orientation.as_euler('zxy',degrees=True)[0]
+        return self.orientation.as_euler('zxy',True)[0]
 
 class Trajectory():
     def __init__(self,start_pose,end_pose,linear_speed,angular_speed,start_time,wait_time=0) -> None: #TODO:possibly create wait time?
@@ -291,9 +290,9 @@ class Trajectory():
         self.end_time = self.turn_time + np.linalg.norm(self.end_pose.position-self.start_pose.position)/self.linear_speed
     
     def _setup_slerp(self):
-        key_rots    = R.concatenate([self.start_pose.orientation,self.start_pose.orientation,self.end_pose.orientation,self.end_pose.orientation])
+        key_rots    = [self.start_pose.orientation,self.start_pose.orientation,self.end_pose.orientation,self.end_pose.orientation]
         key_times   = [self.start_time,self.start_time+self.wait_time+.001,self.turn_time+.002,self.end_time+.003] #hacky bump off
-        self.slerp  = Slerp(key_times,key_rots)
+        self.slerp  = Slerp(key_rots,key_times)
 
     def get_pose_at_time(self,time):
         if self.slerp == None:

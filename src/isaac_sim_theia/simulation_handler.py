@@ -13,7 +13,7 @@ import carb
 import sys
 import random
 
-import cTheia as g
+import cTheia as c 
 import agent
 import theia 
 import time 
@@ -25,7 +25,7 @@ class QualSimulationHandler:
         #TODO: Add in functionality to choose world
         self.kit = kit
         self.draw = _debug_draw.acquire_debug_draw_interface()
-        self.graph = g.TraversalGraph('src/isaac_sim_theia/graphs/test_world_1_graph.json')
+        self.graph = c.TraversalGraph('src/isaac_sim_theia/graphs/test_world_1_graph.json')
         self.load_stage()
 
         self.world = World()

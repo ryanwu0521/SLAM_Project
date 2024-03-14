@@ -1,6 +1,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "include/TraversalGraph.hpp"
+#include "include/Slerp.hpp"
+#include "include/Rotation.hpp"
 
 namespace py = pybind11;
 
@@ -45,4 +47,17 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readwrite("nodes",&TraversalGraph::nodes)
         .def_readwrite("edges",&TraversalGraph::edges); //TODO, possibly use setters/getters
 
+    py::class_<Rotation>(m, "Rotation")
+        .def(py::init<std::array<double, 4>>())
+        .def("as_quat", &Rotation::as_quat)
+        .def("as_euler", &Rotation::as_euler, py::arg("order")="xyz", py::arg("degrees")=false)
+        .def_static("from_euler", &Rotation::from_euler)
+        .def_static("identity", &Rotation::identity)
+        .def_static("from_quat", &Rotation::from_quat)
+        .def_static("normalize_quaternion", &Rotation::normalize_quaternion)
+        .def_static("multiply_quaternions", &Rotation::multiply_quaternions);
+
+    py::class_<Slerp>(m, "Slerp")
+            .def(py::init<std::vector<Rotation>, std::vector<double>>())
+            .def("__call__", &Slerp::operator());
 }
