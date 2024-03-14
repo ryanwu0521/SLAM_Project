@@ -222,56 +222,7 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         self.global_plan = best_path
         for node in self.graph.nodes:
             node.visited = False
-     
-class Trajectory():
-    def __init__(self,start_pose,end_pose,linear_speed,angular_speed,start_time,wait_time=0) -> None: #TODO:possibly create wait time?
-        self.start_pose     = start_pose
-        self.end_pose       = end_pose
-        self.linear_speed   = linear_speed
-        self.angular_speed  = angular_speed
-        self.start_time     = start_time
-        self.wait_time      = 0
-
-        self._calculate_times()
-        self.slerp          = None
     
-    def _calculate_times(self):
-        delta_angle = self.end_pose.get_heading_from_orientation() - self.start_pose.get_heading_from_orientation()
-        while delta_angle < -180:
-            delta_angle += 360
-        while delta_angle > 180:
-            delta_angle -= 360
-        
-        self.turn_time  = self.start_time + abs(delta_angle)/self.angular_speed + self.wait_time
-        self.end_time = self.turn_time + np.linalg.norm(np.array(self.end_pose.get_position())-np.array(self.start_pose.get_position()))/self.linear_speed
-    
-    def _setup_slerp(self):
-        key_rots    = [self.start_pose.get_orientation(),self.start_pose.get_orientation(),self.end_pose.get_orientation(),self.end_pose.get_orientation()]
-        key_times   = [self.start_time,self.start_time+self.wait_time+.001,self.turn_time+.002,self.end_time+.003] #hacky bump off
-        self.slerp  = Slerp(key_rots,key_times)
-
-    def get_pose_at_time(self,time):
-        if self.slerp == None:
-            self._setup_slerp()
-
-        if time <= self.start_time:
-            return self.start_pose
-        if time >= self.end_time:
-            return self.end_pose
-        
-        if time < self.turn_time:
-            return Pose(position=self.start_pose.get_position(),orientation=self.slerp(time))
-        
-        if self.end_time <= self.turn_time and time >= self.turn_time:
-            fposition = self.end_pose.get_position()
-        else:
-            fposition = (time-self.turn_time)/(self.end_time-self.turn_time)*(np.array(self.end_pose.get_position())-np.array(self.start_pose.get_position())) + np.array(self.start_pose.get_position())
-
-        return Pose(position=np.array(fposition),orientation=self.slerp(time))
-
-    def is_finished(self,time):
-        return time > self.end_time
-
 class CompPath():
     def __init__(self, cost, path, time=None) -> None:
         self.cost   = cost

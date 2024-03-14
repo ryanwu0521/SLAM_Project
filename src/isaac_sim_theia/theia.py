@@ -169,7 +169,7 @@ class Theia(a.Agent):
                 pq.put(a.CompPath(new_cost,new_path,cost_traj.end_time))
             if self.wait_time > 0: #add wait edge for planning
                 end_pose = start_pose
-                cost_traj = a.Trajectory(start_pose,end_pose,self.linear_speed,self.angular_speed,current_time,wait_time=self.wait_time)
+                cost_traj = Trajectory(start_pose,end_pose,self.linear_speed,self.angular_speed,current_time,wait_time=self.wait_time)
                 #TODO: Query cost via trajectory
                 new_cost  = best_cost+(cost_traj.end_time-cost_traj.start_time)+self.calculate_cost(cost_traj)
                 new_path = copy.copy(best_path)
@@ -260,7 +260,7 @@ class TrackedObject():
         else:
             self.particle_filter.clear_visible_particles(self.host_agent.current_pose,self.world.current_time)        
 
-    def calculate_cost(self,trajectory:a.Trajectory):
+    def calculate_cost(self,trajectory:Trajectory):
         if self.particle_filter == None:
             return 0
         return (self.particle_filter.calculate_cost(trajectory))**2 * self.avoidance_cost
@@ -608,7 +608,7 @@ class Particle():
 
         raise Exception("This should never happen")
 
-class ExpandedTrajectory(a.Trajectory):
+class ExpandedTrajectory(Trajectory):
     def __init__(self, start_pose, next_node, linear_speed, angular_speed, start_time, edge, wait_time=0.001) -> None:
         end_pose = Pose(next_node.get_position())
         end_pose.set_heading_from_origin(start_pose.get_position())
