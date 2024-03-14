@@ -3,12 +3,14 @@
 import os
 import sys
 import re
+import glob
 from setuptools import setup, Extension
 import pybind11
 
 # Set the name of the module and the source files
 module_name = "cTheia"
-source_files = ["src/isaac_sim_theia/pybind11/cTheia.cpp", "src/isaac_sim_theia/pybind11/TraversalGraph.cpp", "src/isaac_sim_theia/pybind11/TraversalNode.cpp", "src/isaac_sim_theia/pybind11/TraversalEdge.cpp","src/isaac_sim_theia/jsoncpp/jsoncpp.cpp"]
+source_files = glob.glob("src/isaac_sim_theia/pybind11/*.cpp")
+source_files.append("src/isaac_sim_theia/jsoncpp/jsoncpp.cpp")
 
 # Create the extension module
 extension = Extension(

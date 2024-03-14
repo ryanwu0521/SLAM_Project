@@ -1,21 +1,20 @@
 from omni.isaac.core.prims import XFormPrim
 import omni.isaac.core.utils.stage as stage_utils
-import cTheia as g
+
 import json
 import random
 import numpy as np
 from queue import PriorityQueue
 import copy
-from scipy.spatial.transform import Rotation as R
-from scipy.spatial.transform import Slerp
-import math 
+from cTheia import *
+
 import warnings
 
 class Agent():#Note, one day this probably should just be an inherited class from the omni.isaac.core robot class but I didn't do that because I'd have to learn more about that class
 
     #Needs a behavior tree (new class)
     #Needs to own the particle filter (new class)
-    def __init__(self, fgraph:g.TraversalGraph, json_path:str, world):
+    def __init__(self, fgraph:TraversalGraph, json_path:str, world):
         file = open(json_path)
         self.data = json.load(file)
         self.world = world
@@ -38,27 +37,26 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         self.angular_speed = self.data["angular_speed"]
         self.height_offset = self.data["height_offset"] #TODO: replace with param
 
-        self.current_pose = Pose(np.array([0,0,0]),R.from_euler('z',0,degrees=True))
+        self.current_pose = Pose(np.array([0,0,0]), Rotation.from_euler('z',[0],True))
         self.current_time = self.world.current_time
 
         stage_utils.add_reference_to_stage(self.usd_path,self.prim_path)
 
-        self.prim       = XFormPrim(self.articulation_root, name = self.name, position = self.current_pose.position, orientation = self.current_pose.get_quat_scalar_first())
+        self.prim       = XFormPrim(self.articulation_root, name = self.name, position = self.current_pose.get_position(), orientation = self.current_pose.get_quat_scalar_first())
             
     def sync_to_world_time(self):
         self.current_time = self.world.current_time
 
     def set_position_to_node(self, node, orientation):
         self.current_node = node
-        self.current_pose.position = [self.current_node.x,self.current_node.y,0]
+        self.current_pose.set_position(np.array([self.current_node.x,self.current_node.y,0]))
         self.current_pose.set_heading_from_angle(orientation)
         self.sync_world_pose()
-
 
     def randomize_position(self):
         rand_node = random.choice(self.graph.nodes)
         self.current_node = rand_node
-        self.current_pose.position = (rand_node.x,rand_node.y,0)
+        self.current_pose.set_position(np.array([rand_node.x,rand_node.y,0]))
         self.current_pose.randomize_orientation()
         self.sync_world_pose()
 
@@ -72,12 +70,11 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         fend_position   = np.copy(self.next_node.get_position())
         fend_position[2] = self.height_offset
 
-        fend_pose       = Pose(position=fend_position)
-        fend_pose.set_heading_from_origin(self.current_pose.position)
+        fend_pose       = Pose(position=np.array(fend_position))
+        fend_pose.set_heading_from_origin(self.current_pose.get_position())
         
         self.current_trajectory = Trajectory(start_pose=self.current_pose,end_pose=fend_pose,linear_speed=self.linear_speed,angular_speed=self.angular_speed,start_time=self.current_time)
         
-
     def generate_global_plan(self):
         if self.current_node == None and self.current_edge == None:
             raise Exception("Current location unknown, shouldn't be possible")
@@ -124,7 +121,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         
         self.next_node = None
 
-
     def randomize_goal(self):
 
         fgoal_node = random.choice(self.graph.nodes)
@@ -134,7 +130,7 @@ class Agent():#Note, one day this probably should just be an inherited class fro
             self.set_goal(fgoal_node)
     
     def sync_world_pose(self):
-        self.prim.set_world_pose(position = self.current_pose.position, orientation=self.current_pose.get_quat_scalar_first())
+        self.prim.set_world_pose(position = self.current_pose.get_position(), orientation=self.current_pose.get_quat_scalar_first())
 
     def update_position(self):
         if self.current_trajectory == None and (self.global_plan == None or len(self.global_plan) == 0) and self.goal_node == None and self.next_node == None:#Return catch for uninitialized case
@@ -162,7 +158,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
                 self.clear_goal()
             else:
                 self.set_next_node(self.global_plan.pop(0))
-
 
     def spin_once(self):
         #Holds all the necessary time step actions
@@ -194,7 +189,9 @@ class Agent():#Note, one day this probably should just be an inherited class fro
             fnode = best_path[-1]
             start_pose = None
             if len(best_path) == 1:
-                start_pose = Pose(position=fnode.get_position(),orientation=self.current_pose.orientation)
+                print(type(fnode.get_position()))
+                print(self.current_pose.get_orientation())
+                start_pose = Pose(position=fnode.get_position(), orientation=self.current_pose.get_orientation())
             else:
                 start_pose = Pose(position=fnode.get_position())
                 start_pose.set_heading_from_origin(best_path[-2].get_position())
@@ -211,7 +208,7 @@ class Agent():#Note, one day this probably should just be an inherited class fro
                 #calculate cost to take edge
                 #time it takes to travel distance
                 end_pose  = Pose(position=onode.get_position())
-                end_pose.set_heading_from_origin(start_pose.position)
+                end_pose.set_heading_from_origin(start_pose.get_position())
                 cost_traj = Trajectory(start_pose,end_pose,self.linear_speed,self.angular_speed,0)
                 
                 new_cost  = best_cost+cost_traj.end_time
@@ -225,49 +222,7 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         self.global_plan = best_path
         for node in self.graph.nodes:
             node.visited = False
-           
-class Pose():
-    def __init__(self,position=np.array([0,0,0]),orientation=R.identity()) -> None:
-        self.position    = np.array(position)
-        self.orientation = orientation
-
-    def __eq__(self, __value: object) -> bool:
-        return (self.position[0] == object.position[0] and self.position[1] == object.position[1] and self.get_heading_from_orientation() == object.get_heading_from_orientation())
-
-    def set_heading_from_isaac_quat(self,quat_s_first):
-        quat_s_last = np.zeros(4)
-        quat_s_last[3] = quat_s_first[0]
-        quat_s_last[:3] = quat_s_first[1:]
-
-        self.orientation = R.from_quat(quat_s_last)
-
-    def get_quat_scalar_first(self):
-        quat_s_last = self.get_quat_scalar_last()
-        quat_s_first = np.zeros(4)
-        quat_s_first[0] = quat_s_last[3]
-        quat_s_first[1:] = quat_s_last[:3]
-        return quat_s_first
-
-    def get_quat_scalar_last(self):
-        return self.orientation.as_quat()
-
-    def set_heading_from_angle(self,angle,degrees=True):
-        self.orientation = R.from_euler('z',angle,degrees=degrees)
-
-    def set_heading_to_destination(self,dest):
-        delta_pos = dest-self.position
-        self.set_heading_from_angle(math.atan2(delta_pos[1],delta_pos[0]),degrees=False) 
-
-    def set_heading_from_origin(self,origin):
-        delta_pos = self.position-np.array(origin)
-        self.set_heading_from_angle(math.atan2(delta_pos[1],delta_pos[0]),degrees=False)
-
-    def randomize_orientation(self):
-        self.orientation = R.from_euler('z',random.randint(0,360),degrees=True)
-
-    def get_heading_from_orientation(self):
-        return self.orientation.as_euler('zxy',degrees=True)[0]
-
+     
 class Trajectory():
     def __init__(self,start_pose,end_pose,linear_speed,angular_speed,start_time,wait_time=0) -> None: #TODO:possibly create wait time?
         self.start_pose     = start_pose
@@ -276,7 +231,7 @@ class Trajectory():
         self.angular_speed  = angular_speed
         self.start_time     = start_time
         self.wait_time      = 0
-        #TODO: Add wait time support
+
         self._calculate_times()
         self.slerp          = None
     
@@ -288,12 +243,12 @@ class Trajectory():
             delta_angle -= 360
         
         self.turn_time  = self.start_time + abs(delta_angle)/self.angular_speed + self.wait_time
-        self.end_time = self.turn_time + np.linalg.norm(self.end_pose.position-self.start_pose.position)/self.linear_speed
+        self.end_time = self.turn_time + np.linalg.norm(np.array(self.end_pose.get_position())-np.array(self.start_pose.get_position()))/self.linear_speed
     
     def _setup_slerp(self):
-        key_rots    = R.concatenate([self.start_pose.orientation,self.start_pose.orientation,self.end_pose.orientation,self.end_pose.orientation])
+        key_rots    = [self.start_pose.get_orientation(),self.start_pose.get_orientation(),self.end_pose.get_orientation(),self.end_pose.get_orientation()]
         key_times   = [self.start_time,self.start_time+self.wait_time+.001,self.turn_time+.002,self.end_time+.003] #hacky bump off
-        self.slerp  = Slerp(key_times,key_rots)
+        self.slerp  = Slerp(key_rots,key_times)
 
     def get_pose_at_time(self,time):
         if self.slerp == None:
@@ -305,14 +260,14 @@ class Trajectory():
             return self.end_pose
         
         if time < self.turn_time:
-            return Pose(position=self.start_pose.position,orientation=self.slerp(time))
+            return Pose(position=self.start_pose.get_position(),orientation=self.slerp(time))
         
         if self.end_time <= self.turn_time and time >= self.turn_time:
-            fposition = self.end_pose.position
+            fposition = self.end_pose.get_position()
         else:
-            fposition = (time-self.turn_time)/(self.end_time-self.turn_time)*(self.end_pose.position-self.start_pose.position) + self.start_pose.position
+            fposition = (time-self.turn_time)/(self.end_time-self.turn_time)*(np.array(self.end_pose.get_position())-np.array(self.start_pose.get_position())) + np.array(self.start_pose.get_position())
 
-        return Pose(position=fposition,orientation=self.slerp(time))
+        return Pose(position=np.array(fposition),orientation=self.slerp(time))
 
     def is_finished(self,time):
         return time > self.end_time

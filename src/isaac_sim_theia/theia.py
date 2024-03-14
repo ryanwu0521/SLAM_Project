@@ -2,10 +2,11 @@ from omni.isaac.core.prims import XFormPrim
 from omni.isaac.debug_draw import _debug_draw
 
 import omni.isaac.core.utils.stage as stage_utils
-import cTheia as g
+
 import agent as a
-from scipy.spatial.transform import Rotation as R
-from scipy.spatial.transform import Slerp
+
+from cTheia import *
+
 import scipy.stats as st
 
 from queue import PriorityQueue
@@ -19,7 +20,7 @@ class Theia(a.Agent):
     #class to initialize a forklift instance
     #Needs a behavior tree (new class)
     #Needs to own the particle filter (new class)
-    def __init__(self, fgraph:g.TraversalGraph, json_path:str, world) -> None:
+    def __init__(self, fgraph:TraversalGraph, json_path:str, world) -> None:
 
         super().__init__(fgraph,json_path,world)
         self.tracked_objects = []
@@ -44,7 +45,7 @@ class Theia(a.Agent):
     def sync_world_pose(self):
         super().sync_world_pose()
         test_pose = self.prim.get_world_pose()
-        test_orientation = R.from_quat(test_pose[1])     
+        test_orientation = Rotation.from_quat(test_pose[1])     
 
     def draw(self):
         pass
@@ -140,9 +141,9 @@ class Theia(a.Agent):
 
             start_pose = None
             if len(best_path) == 1:
-                start_pose = a.Pose(position=fnode.get_position(),orientation=self.current_pose.orientation)
+                start_pose = Pose(position=fnode.get_position(),orientation=self.current_pose.get_orientation())
             else:
-                start_pose = a.Pose(position=fnode.get_position())
+                start_pose = Pose(position=fnode.get_position())
                 start_pose.set_heading_from_origin(best_path[-2].get_position())
 
             object_cost = 0
@@ -209,7 +210,7 @@ class TrackedObject():
         orientation_scalar_last  = np.zeros(4)
         orientation_scalar_last[3]  = orientation_scalar_first[0]
         orientation_scalar_last[:3]  = orientation_scalar_first[1:]
-        fpose = a.Pose(pose[0])
+        fpose = Pose(pose[0])
         fpose.set_heading_from_isaac_quat(pose[1])
         return fpose
 
@@ -227,7 +228,7 @@ class TrackedObject():
     
     def is_observed_FOV(self) -> bool:
         heading1 = self.host_agent.current_pose.get_heading_from_orientation()
-        delta_pos = self.get_pose().position - self.host_agent.current_pose.position
+        delta_pos = np.array(self.get_pose().get_position()) - np.array(self.host_agent.current_pose.get_position())
         heading2 = math.atan2(delta_pos[1],delta_pos[0])/math.pi*180
         delta_heading = heading2 - heading1
 
@@ -265,7 +266,7 @@ class TrackedObject():
         return (self.particle_filter.calculate_cost(trajectory))**2 * self.avoidance_cost
     
 class ParticleFilter():
-    def __init__(self,dict,fgraph:g.TraversalGraph,pose:a.Pose,time:float) -> None: 
+    def __init__(self,dict,fgraph:TraversalGraph,pose:Pose,time:float) -> None: 
         #need array of particles 
 
         self.graph = fgraph
@@ -291,17 +292,17 @@ class ParticleFilter():
         
     def initialize_particles(self,pose,time):
         self.particles = [None] * self.num_particles
-        edge = self.graph.get_closest_edge(pose.position)
+        edge = self.graph.get_closest_edge(pose.get_position())
         # edge.draw_color = (0, 1, 1, .25)
         next_node = None
-        if edge.node1.x == pose.position[0] and edge.node1.y == pose.position[1]:
+        if edge.node1.x == pose.get_position()[0] and edge.node1.y == pose.get_position()[1]:
             next_node = edge.node1
-        elif edge.node2.x == pose.position[0] and edge.node2.y == pose.position[1]:
+        elif edge.node2.x == pose.get_position()[0] and edge.node2.y == pose.get_position()[1]:
             next_node = edge.node2
         else:
             heading = pose.get_heading_from_orientation()
-            angle1 = math.atan2(edge.node1.y - pose.position[1] , edge.node1.x - pose.position[0])/math.pi*180
-            angle2 = math.atan2(edge.node2.y - pose.position[1] , edge.node2.x - pose.position[0])/math.pi*180 
+            angle1 = math.atan2(edge.node1.y - pose.get_position()[1] , edge.node1.x - pose.get_position()[0])/math.pi*180
+            angle2 = math.atan2(edge.node2.y - pose.get_position()[1] , edge.node2.x - pose.get_position()[0])/math.pi*180 
             del_1  = abs(angle1 - heading)
             if del_1 > 180:
                 del_1 = 360 - del_1
@@ -336,7 +337,7 @@ class ParticleFilter():
         heading1 = pose.get_heading_from_orientation()
         for i in range(self.num_particles):
             ppose = self.particles[i].get_pose_at_time(time)
-            dposition = ppose.position - pose.position
+            dposition = np.array(ppose.get_position()) - np.array(pose.get_position())
             heading2 = math.atan2(dposition[1],dposition[0])/math.pi*180
             heading_to_particle = abs(heading2 - heading1)
             if heading_to_particle > 180:
@@ -373,19 +374,19 @@ class ParticleFilter():
             return
         likelihoods = np.zeros(self.num_particles)
         new_particles = []
-        if self.edge == None or self.edge.get_distance_from(pose.position) > .02:
-            self.edge = self.graph.get_closest_edge(pose.position)
+        if self.edge == None or self.edge.get_distance_from(pose.get_position()) > .02:
+            self.edge = self.graph.get_closest_edge(pose.get_position())
 
         next_node = None
         ratio = 1-self.spawn_rate
-        if self.edge.node1.x == pose.position[0] and self.edge.node1.y == pose.position[1]:
+        if self.edge.node1.x == pose.get_position()[0] and self.edge.node1.y == pose.get_position()[1]:
             p1 = 1 
-        elif self.edge.node2.x == pose.position[0] and self.edge.node2.y == pose.position[1]:
+        elif self.edge.node2.x == pose.get_position()[0] and self.edge.node2.y == pose.get_position()[1]:
             p1 = 0
         else:
             heading = pose.get_heading_from_orientation()
-            angle1 = math.atan2(self.edge.node1.y - pose.position[1] , self.edge.node1.x - pose.position[0])/math.pi*180
-            angle2 = math.atan2(self.edge.node2.y - pose.position[1] , self.edge.node2.x - pose.position[0])/math.pi*180 
+            angle1 = math.atan2(self.edge.node1.y - pose.get_position()[1] , self.edge.node1.x - pose.get_position()[0])/math.pi*180
+            angle2 = math.atan2(self.edge.node2.y - pose.get_position()[1] , self.edge.node2.x - pose.get_position()[0])/math.pi*180 
             del_1  = abs(angle1 - heading)
             if del_1 > 180:
                 del_1 = 360 - del_1
@@ -400,7 +401,7 @@ class ParticleFilter():
         for i in range(self.num_particles):
             ppose = self.particles[i].get_pose_at_time(time)
 
-            z_pos   = np.linalg.norm(ppose.position - pose.position)/self.position_variance
+            z_pos   = np.linalg.norm(np.array(ppose.get_position()) - np.array(pose.get_position()))/self.position_variance
             d_rot   = abs(ppose.get_heading_from_orientation() - pose.get_heading_from_orientation())
             if d_rot > 180:
                 d_rot = 360 - d_rot
@@ -440,7 +441,7 @@ class ParticleFilter():
         
         self.propogate_particles(time)
         for particle in self.particles:
-            self.draw.draw_points([particle.get_pose_at_time(time).position],[color],[self.draw_size])
+            self.draw.draw_points([particle.get_pose_at_time(time).get_position()],[color],[self.draw_size])
 
     def trim_history(self,trim_time):
         for particle in self.particles:
@@ -609,8 +610,8 @@ class Particle():
 
 class ExpandedTrajectory(a.Trajectory):
     def __init__(self, start_pose, next_node, linear_speed, angular_speed, start_time, edge, wait_time=0.001) -> None:
-        end_pose = a.Pose(next_node.get_position())
-        end_pose.set_heading_from_origin(start_pose.position)
+        end_pose = Pose(next_node.get_position())
+        end_pose.set_heading_from_origin(start_pose.get_position())
         if edge == None:
             raise Exception("Edge cannot be none")
         if next_node == None:

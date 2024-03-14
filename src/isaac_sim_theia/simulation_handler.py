@@ -13,7 +13,7 @@ import carb
 import sys
 import random
 
-import cTheia as g
+import cTheia as c 
 import agent
 import theia 
 import time 
@@ -25,7 +25,7 @@ class QualSimulationHandler:
         #TODO: Add in functionality to choose world
         self.kit = kit
         self.draw = _debug_draw.acquire_debug_draw_interface()
-        self.graph = g.TraversalGraph('src/isaac_sim_theia/graphs/test_world_1_graph.json')
+        self.graph = c.TraversalGraph('src/isaac_sim_theia/graphs/test_world_1_graph.json')
         self.load_stage()
 
         self.world = World()
@@ -103,7 +103,7 @@ class QualSimulationHandler:
             return
         if self.theia_1.goal_node == None or self.forklift_1.goal_node == None:
             return
-        current = np.copy(self.theia_1.current_pose.position)
+        current = np.copy(self.theia_1.current_pose.get_position())
         current[2] = 2
         heading = np.copy(current)
         heading[0] += np.cos(self.theia_1.current_pose.get_heading_from_orientation()/180*np.pi) * 2
@@ -122,7 +122,7 @@ class QualSimulationHandler:
         self.draw.draw_lines([current],[heading],[(0,0,0,1)],[10])
         self.draw.draw_points([current],[(0,1,0,1)],[(40)])
 
-        current = np.copy(self.forklift_1.current_pose.position)
+        current = np.copy(self.forklift_1.current_pose.get_position())
         current[2] = 2
         heading = np.copy(current)
         heading[0] += np.cos(self.forklift_1.current_pose.get_heading_from_orientation()/180*np.pi) * 2
@@ -141,7 +141,7 @@ class QualSimulationHandler:
         if self.theia_1.goal_node == None or self.forklift_1.goal_node == None:
             return
         
-        self.draw.draw_lines([self.theia_1.current_pose.position],[self.theia_1.next_node.get_position()],[dot_color],[5])
+        self.draw.draw_lines([self.theia_1.current_pose.get_position()],[self.theia_1.next_node.get_position()],[dot_color],[5])
         prev_position = self.theia_1.next_node.get_position()
         for node in self.theia_1.global_plan:
             # self.draw.draw_points([node.get_position()],[dot_color],[dot_size])
@@ -152,7 +152,7 @@ class QualSimulationHandler:
         dot_size  = (20)
         
 
-        self.draw.draw_lines([self.forklift_1.current_pose.position],[self.forklift_1.next_node.get_position()],[dot_color],[5])
+        self.draw.draw_lines([self.forklift_1.current_pose.get_position()],[self.forklift_1.next_node.get_position()],[dot_color],[5])
         prev_position = self.forklift_1.next_node.get_position()
         for node in self.forklift_1.global_plan:
             # self.draw.draw_points([node.get_position()],[dot_color],[dot_size])
@@ -205,7 +205,7 @@ class QualSimulationHandler:
         self.forklift_1.spin_once()
         self.theia_1.spin_once()
 
-        if np.sqrt((self.theia_1.current_pose.position[0]-self.forklift_1.current_pose.position[0])**2+(self.theia_1.current_pose.position[1]-self.forklift_1.current_pose.position[1])**2) < 1:
+        if np.sqrt((self.theia_1.current_pose.get_position()[0]-self.forklift_1.current_pose.get_position()[0])**2+(self.theia_1.current_pose.get_position()[1]-self.forklift_1.current_pose.get_position()[1])**2) < 1:
             #TODO:Cleanup this implementation
             self.theia_1.clear_goal()
             self.theia_1.clear_next_node()
