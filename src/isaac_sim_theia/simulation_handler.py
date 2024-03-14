@@ -28,8 +28,8 @@ class QualSimulationHandler:
         self.graph = c.TraversalGraph('src/isaac_sim_theia/graphs/test_world_1_graph.json')
         self.load_stage()
 
-        self.world = World()
-        self.physx = PhysicsContext()
+        self.world = World(physics_dt=1,rendering_dt=1)
+        self.physx = self.world.get_physics_context()
         self.physx.set_gravity(0.0)
         self.world.initialize_physics()
 
