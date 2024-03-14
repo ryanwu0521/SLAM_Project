@@ -9,120 +9,68 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-Rotation::Rotation(std::array<double, 4> q) : _q(q) {}
+#ifndef M_PI_2
+#define M_PI_2 1.57079632679489661923 /* pi/2 */
+#endif
+
+
+Rotation::Rotation(std::array<double, 4> q) : _q(q) {
+    normalize_quaternion(_q);
+}
 
 Rotation::~Rotation() {}
 
 // Method to retrieve the quaternion
-std::array<double, 4> Rotation::as_quat() const{
+std::array<double, 4> Rotation::as_quat(bool scalar_last) const{
+    if(scalar_last == false){
+        return {_q[3], _q[0], _q[1], _q[2]};
+    }
     return _q;
 }
 
-std::array<double, 3> Rotation::as_euler(std::string order, bool degrees) const{
-// Method to convert to Euler anglesstd::array<double, 3> Rotation::as_euler(std::string order, bool degrees) const{
-    // Extract quaternion components
+std::array<std::array<double, 3>, 3> Rotation::as_matrix() const {
     double qw = _q[3];
     double qx = _q[0];
     double qy = _q[1];
     double qz = _q[2];
 
-    std::transform(order.begin(), order.end(), order.begin(), [](unsigned char c) { return std::toupper(c); });
+    std::array<std::array<double, 3>, 3> R;
 
-    // Compute Euler angles based on the specified order
+    R[0][0] = 1 - 2 * (qy * qy + qz * qz);
+    R[0][1] = 2 * (qx * qy - qz * qw);
+    R[0][2] = 2 * (qx * qz + qy * qw);
+
+    R[1][0] = 2 * (qx * qy + qz * qw);
+    R[1][1] = 1 - 2 * (qx * qx + qz * qz);
+    R[1][2] = 2 * (qy * qz - qx * qw);
+
+    R[2][0] = 2 * (qx * qz - qy * qw);
+    R[2][1] = 2 * (qy * qz + qx * qw);
+    R[2][2] = 1 - 2 * (qx * qx + qy * qy);
+
+    return R;
+}
+
+
+std::array<double, 3> Rotation::as_euler(const std::array<int, 3>& order, bool degrees) const{
     std::array<double, 3> euler;
 
-    if (order == "XYZ") {
-        // Handle XYZ order
-        double sinr_cosp = 2 * (qw * qx + qy * qz);
-        double cosr_cosp = 1 - 2 * (qx * qx + qy * qy);
-        euler[0] = std::atan2(sinr_cosp, cosr_cosp); // Roll (X-axis rotation)
+    // Extract Euler angles from the rotation matrix based on the order
+    std::array<std::array<double, 3>, 3> R = as_matrix();
 
-        double sinp = 2 * (qw * qy - qz * qx);
-        if (std::abs(sinp) >= 1)
-            euler[1] = std::copysign(M_PI / 2, sinp); // Pitch (Y-axis rotation)
-        else
-            euler[1] = std::asin(sinp);
+    double sp = -R[order[2]][order[0]]; // sin(theta)
+    double cp = std::sqrt(1 - sp * sp);  // cos(theta)
 
-        double siny_cosp = 2 * (qw * qz + qx * qy);
-        double cosy_cosp = 1 - 2 * (qy * qy + qz * qz);
-        euler[2] = std::atan2(siny_cosp, cosy_cosp); // Yaw (Z-axis rotation)
-    } else if (order == "XZY") {
-        // Handle XZY order
-        double sinr_cosp = 2 * (qw * qx - qz * qy);
-        double cosr_cosp = 1 - 2 * (qx * qx + qz * qz);
-        euler[0] = std::atan2(sinr_cosp, cosr_cosp); // Roll (X-axis rotation)
-
-        double sinp = 2 * (qw * qz + qx * qy);
-        if (std::abs(sinp) >= 1)
-            euler[1] = std::copysign(M_PI / 2, sinp); // Pitch (Z-axis rotation)
-        else
-            euler[1] = std::asin(sinp);
-
-        double siny_cosp = 2 * (qw * qy + qz * qx);
-        double cosy_cosp = 1 - 2 * (qx * qx + qy * qy);
-        euler[2] = std::atan2(siny_cosp, cosy_cosp); // Yaw (Y-axis rotation)
-    } else if (order == "YXZ") {
-        // Handle YXZ order
-        double sinr_cosp = 2 * (qw * qy - qz * qx);
-        double cosr_cosp = 1 - 2 * (qx * qx + qz * qz);
-        euler[0] = std::atan2(sinr_cosp, cosr_cosp); // Roll (Y-axis rotation)
-
-        double sinp = 2 * (qw * qx + qy * qz);
-        if (std::abs(sinp) >= 1)
-            euler[1] = std::copysign(M_PI / 2, sinp); // Pitch (X-axis rotation)
-        else
-            euler[1] = std::asin(sinp);
-
-        double siny_cosp = 2 * (qw * qz + qy * qx);
-        double cosy_cosp = 1 - 2 * (qx * qx + qy * qy);
-        euler[2] = std::atan2(siny_cosp, cosy_cosp); // Yaw (Z-axis rotation)
-    } else if (order == "YZX") {
-        // Handle YZX order
-        double sinr_cosp = 2 * (qw * qy + qz * qx);
-        double cosr_cosp = 1 - 2 * (qx * qx + qy * qy);
-        euler[0] = std::atan2(sinr_cosp, cosr_cosp); // Roll (Y-axis rotation)
-
-        double sinp = 2 * (qw * qx - qy * qz);
-        if (std::abs(sinp) >= 1)
-            euler[1] = std::copysign(M_PI / 2, sinp); // Pitch (X-axis rotation)
-        else
-            euler[1] = std::asin(sinp);
-
-        double siny_cosp = 2 * (qw * qz + qx * qy);
-        double cosy_cosp = 1 - 2 * (qy * qy + qz * qz);
-        euler[2] = std::atan2(siny_cosp, cosy_cosp); // Yaw (Z-axis rotation)
-    } else if (order == "ZXY") {
-        // Handle ZXY order
-        double sinr_cosp = 2 * (qw * qz - qx * qy);
-        double cosr_cosp = 1 - 2 * (qy * qy + qz * qz);
-        euler[0] = std::atan2(sinr_cosp, cosr_cosp); // Roll (Z-axis rotation)
-
-        double sinp = 2 * (qw * qx + qy * qz);
-        if (std::abs(sinp) >= 1)
-            euler[1] = std::copysign(M_PI / 2, sinp); // Pitch (X-axis rotation)
-        else
-            euler[1] = std::asin(sinp);
-
-        double siny_cosp = 2 * (qw * qy + qz * qx);
-        double cosy_cosp = 1 - 2 * (qx * qx + qz * qz);
-        euler[2] = std::atan2(siny_cosp, cosy_cosp); // Yaw (Y-axis rotation)
-    } else if (order == "ZYX") {
-        // Handle ZYX order
-        double sinr_cosp = 2 * (qw * qz + qx * qy);
-        double cosr_cosp = 1 - 2 * (qy * qy + qz * qz);
-        euler[0] = std::atan2(sinr_cosp, cosr_cosp); // Roll (Z-axis rotation)
-
-        double sinp = 2 * (qw * qy - qz * qx);
-        if (std::abs(sinp) >= 1)
-            euler[1] = std::copysign(M_PI / 2, sinp); // Pitch (Y-axis rotation)
-        else
-            euler[1] = std::asin(sinp);
-
-        double siny_cosp = 2 * (qw * qx + qy * qz);
-        double cosy_cosp = 1 - 2 * (qx * qx + qy * qy);
-        euler[2] = std::atan2(siny_cosp, cosy_cosp); // Yaw (X-axis rotation)
+    // Handle near-gimbal lock situations
+    if (std::abs(cp) < 1e-6) {
+        // Gimbal lock: theta is near +/- pi/2
+        euler[1] = sp > 0 ? M_PI_2 : -M_PI_2;
+        euler[0] = std::atan2(R[order[0]][order[1]], R[order[1]][order[1]]);
+        euler[2] = 0; // Set third angle to 0 for consistency
     } else {
-        throw std::invalid_argument("Invalid Euler angle order");
+        euler[1] = std::asin(sp);
+        euler[0] = std::atan2(R[order[2]][order[1]] / cp, R[order[2]][order[2]] / cp);
+        euler[2] = std::atan2(R[order[1]][order[0]] / cp, R[order[0]][order[0]] / cp);
     }
 
     // Convert to degrees if required
@@ -133,6 +81,33 @@ std::array<double, 3> Rotation::as_euler(std::string order, bool degrees) const{
     }
 
     return euler;
+}
+
+
+// Method to convert to Euler angles
+std::array<double, 3> Rotation::as_euler(std::string order, bool degrees) const{
+
+    std::transform(order.begin(), order.end(), order.begin(), [](unsigned char c) { return std::toupper(c); });
+
+    std::array<int, 3> index_order;
+
+    if (order == "XYZ") {
+        index_order = {0,1,2};
+    } else if (order == "XZY") {
+        index_order = {0,2,1};
+    } else if (order == "YXZ") {
+        index_order = {1,0,2};
+    } else if (order == "YZX") {
+        index_order = {1,2,0};
+    } else if (order == "ZXY") {
+        index_order = {2,0,1};
+    } else if (order == "ZYX") {
+        index_order = {2,1,0};
+    } else {
+        throw std::invalid_argument("Invalid Euler angle order");
+    }
+
+    return as_euler(index_order, degrees);
 }
 
 
@@ -189,8 +164,6 @@ Rotation Rotation::from_euler(std::string order, std::vector<double> values, boo
         throw std::invalid_argument("Invalid Euler angle order");
     }
 
-    std::cout << angles[0] << ", " << angles[1] << ", " << angles[2] << std::endl;
-
     // Compute quaternion components based on the specified order
     double cy = std::cos(angles[2] * 0.5);
     double sy = std::sin(angles[2] * 0.5);
@@ -212,28 +185,29 @@ Rotation Rotation::from_euler(std::string order, std::vector<double> values, boo
     q[1] = cr * sp * cy + sr * cp * sy; //y
     q[2] = cr * cp * sy - sr * sp * cy; //z
 
-    // Normalize the resulting quaternion to ensure it represents a valid rotation
-    q = normalize_quaternion(q);
-
     return Rotation(q);
 }
 
 
 
 // Helper function to normalize a quaternion
-std::array<double, 4> Rotation::normalize_quaternion(const std::array<double, 4>& q) {
+void Rotation::normalize_quaternion(std::array<double, 4>& q) {
     double norm_squared = q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3];
     if (norm_squared == 0.0) {
         throw std::runtime_error("Attempted to normalize a zero quaternion");
     }
     double norm = std::sqrt(norm_squared);
-    return {q[0] / norm, q[1] / norm, q[2] / norm, q[3] / norm};
+    q = {q[0] / norm, q[1] / norm, q[2] / norm, q[3] / norm};
+    return;
 }
 
 
 
 // Static method to create a Rotation object from a quaternion
-Rotation Rotation::from_quat(std::array<double, 4> q) {
+Rotation Rotation::from_quat(std::array<double, 4> q, bool scalar_last) {
+    if(scalar_last == false){
+        q = {q[1], q[2], q[3], q[0]};
+    }
     return Rotation(q);
 }
 
@@ -248,5 +222,18 @@ std::array<double, 4> Rotation::multiply_quaternions(const std::array<double, 4>
 }
 
 Rotation Rotation::identity(){
-    return Rotation();
+    return from_quat({0,0,0,1});
+}
+
+bool Rotation::operator==(const Rotation& obj) const{
+    std::array<double, 4> q1 = _q;
+    std::array<double, 4> q2 = obj.as_quat();
+
+    bool fequal = true;
+    for(int i = 0; i<4; i++){
+        if(q1[i] != q2[i]){
+            fequal = false;
+        }
+    }
+    return fequal;
 }
