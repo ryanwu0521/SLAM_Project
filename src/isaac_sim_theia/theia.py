@@ -125,7 +125,7 @@ class Theia(a.Agent):
         pq = PriorityQueue()
         best_cost = 0
         best_path = [self.current_node]
-        pq.put(a.CompPath(best_cost,best_path,self.world.current_time))
+        pq.put(CompPath(best_cost,best_path,self.world.current_time))
 
         fnode = None
 
@@ -166,7 +166,7 @@ class Theia(a.Agent):
                 new_path = copy.copy(best_path)
                 new_path.append(onode)
                 #put cost path combo in pq
-                pq.put(a.CompPath(new_cost,new_path,cost_traj.end_time))
+                pq.put(CompPath(new_cost,new_path,cost_traj.end_time))
             if self.wait_time > 0: #add wait edge for planning
                 end_pose = start_pose
                 cost_traj = Trajectory(start_pose,end_pose,self.linear_speed,self.angular_speed,current_time,wait_time=self.wait_time)
@@ -174,7 +174,7 @@ class Theia(a.Agent):
                 new_cost  = best_cost+(cost_traj.end_time-cost_traj.start_time)+self.calculate_cost(cost_traj)
                 new_path = copy.copy(best_path)
                 new_path.append(onode)
-                pq.put(a.CompPath(new_cost,new_path,cost_traj.end_time))
+                pq.put(CompPath(new_cost,new_path,cost_traj.end_time))
         
         self.global_plan = best_path
         for node in self.graph.nodes:
