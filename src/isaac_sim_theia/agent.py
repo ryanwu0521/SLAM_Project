@@ -220,29 +220,3 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         self.global_plan = best_path
         for node in self.graph.nodes:
             node.visited = False
-    
-class CompPath():
-    def __init__(self, cost, path, time=None) -> None:
-        self.cost   = cost
-        self.path   = copy.copy(path)
-        self.time   = time
-        if self.time == None:
-            self.time   = cost
-
-    def __eq__(self, other):
-        return self.cost == other.cost
-    
-    def __ne__(self, other):
-        return self.cost != other.cost
-
-    def __lt__(self, other):
-        return self.cost < other.cost
-    
-    def __le__(self, other):
-        return self.cost <= other.cost
-    
-    def __gt__(self, other):
-        return self.cost > other.cost
-    
-    def __ge__(self, other):
-        return self.cost >= other.cost   

@@ -5,6 +5,7 @@
 #include "include/Rotation.hpp"
 #include "include/Pose.hpp"
 #include "include/Trajectory.hpp"
+#include "include/CompPath.hpp"
 
 namespace py = pybind11;
 
@@ -103,4 +104,16 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readonly("next_node", &Trajectory::next_node)
         .def_readonly("prev_node", &Trajectory::prev_node)
         .def_readonly("edge", &Trajectory::edge);
+
+    py::class_<CompPath>(m, "CompPath")
+        .def(py::init<double, const std::vector<std::shared_ptr<TraversalNode>>&, double>(), py::arg("cost"), py::arg("path"), py::arg("time") = -1)
+        .def("__eq__", &CompPath::operator==)
+        .def("__ne__", &CompPath::operator!=)
+        .def("__lt__", &CompPath::operator<)
+        .def("__le__", &CompPath::operator<=)
+        .def("__gt__", &CompPath::operator>)
+        .def("__ge__", &CompPath::operator>=)
+        .def_readonly("cost", &CompPath::cost)
+        .def_readonly("path", &CompPath::path)
+        .def_readonly("time", &CompPath::time);
 }
