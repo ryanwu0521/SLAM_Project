@@ -86,7 +86,10 @@ PYBIND11_MODULE(cTheia, m) {
     py::class_<Trajectory>(m, "Trajectory")
         .def(py::init<Pose, Pose, double, double, double, double>(),
              py::arg("start_pose"), py::arg("end_pose"), py::arg("linear_speed"),
-             py::arg("angular_speed"), py::arg("start_time"), py::arg("wait_time") = 0.0)
+             py::arg("angular_speed"), py::arg("start_time"), py::arg("wait_time") = 0.001)
+        .def(py::init<Pose, std::shared_ptr<TraversalNode>, std::shared_ptr<TraversalEdge>, double, double, double, double>(),
+             py::arg("start_pose"), py::arg("next_node"), py::arg("edge"), py::arg("linear_speed"),
+             py::arg("angular_speed"), py::arg("start_time"), py::arg("wait_time") = 0.001)
         .def("get_pose_at_time", &Trajectory::get_pose_at_time)
         .def("is_finished", &Trajectory::is_finished)
         .def_readonly("start_pose", &Trajectory::start_pose)
@@ -96,5 +99,8 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readonly("start_time", &Trajectory::start_time)
         .def_readonly("wait_time", &Trajectory::wait_time)
         .def_readonly("turn_time", &Trajectory::turn_time)
-        .def_readonly("end_time", &Trajectory::end_time);
+        .def_readonly("end_time", &Trajectory::end_time)
+        .def_readonly("next_node", &Trajectory::next_node)
+        .def_readonly("prev_node", &Trajectory::prev_node)
+        .def_readonly("edge", &Trajectory::edge);
 }
