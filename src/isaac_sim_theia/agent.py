@@ -189,8 +189,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
             fnode = best_path[-1]
             start_pose = None
             if len(best_path) == 1:
-                print(type(fnode.get_position()))
-                print(self.current_pose.get_orientation())
                 start_pose = Pose(position=fnode.get_position(), orientation=self.current_pose.get_orientation())
             else:
                 start_pose = Pose(position=fnode.get_position())
