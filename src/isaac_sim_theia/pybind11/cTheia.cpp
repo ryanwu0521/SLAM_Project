@@ -6,6 +6,7 @@
 #include "include/Pose.hpp"
 #include "include/Trajectory.hpp"
 #include "include/CompPath.hpp"
+#include "include/Particle.hpp"
 
 namespace py = pybind11;
 
@@ -116,4 +117,19 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readonly("cost", &CompPath::cost)
         .def_readonly("path", &CompPath::path)
         .def_readonly("time", &CompPath::time);
+
+    py::class_<Particle>(m, "Particle")
+        .def(py::init<Pose, std::shared_ptr<TraversalEdge>, std::shared_ptr<TraversalNode>, std::shared_ptr<TraversalGraph>, double, double, const std::string&, double>())
+        .def("collision_check", &Particle::collision_check)
+        .def("add_next_traj", &Particle::add_next_traj)
+        .def("trim_history", &Particle::trim_history)
+        .def("get_pose_at_time", &Particle::get_pose_at_time)
+        .def("_forward_behavior", &Particle::_forward_behavior)
+        .def("_random_behavior", &Particle::_random_behavior)
+        .def("propogate", &Particle::propogate)
+        .def_readwrite("behavior", &Particle::behavior)
+        .def_readwrite("linear_speed", &Particle::linear_speed)
+        .def_readwrite("angular_speed", &Particle::angular_speed)
+        .def_readwrite("graph", &Particle::graph)
+        .def_readwrite("trajectory", &Particle::trajectory);
 }
