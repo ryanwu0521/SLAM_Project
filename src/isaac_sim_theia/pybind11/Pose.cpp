@@ -55,8 +55,8 @@ void Pose::randomize_orientation() {
 }
 
 double Pose::get_heading_from_orientation() const {
-    std::array<double, 3> euler_angles = orientation.as_euler("ZYX", true);
-    return euler_angles[0];
+    std::array<double, 3> euler_angles = orientation.as_euler("XYZ", true);
+    return euler_angles[2];
 }
 
 Rotation Pose::get_orientation() const{
