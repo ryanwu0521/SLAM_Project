@@ -156,7 +156,7 @@ class Theia(a.Agent):
 
                 #calculate cost to take edge
                 #time it takes to travel distance
-                cost_traj = ExpandedTrajectory(start_pose,onode,self.linear_speed,self.angular_speed,current_time,edge,0)
+                cost_traj = Trajectory(start_pose,onode,self.linear_speed,self.angular_speed,current_time,edge,0)
                 
                 #TODO: Need to query edge for trajectory
                 object_cost = self.calculate_cost(cost_traj)
@@ -467,7 +467,7 @@ class Particle():
         self.linear_speed = speed
         self.angular_speed = rot
         self.graph = fgraph
-        self.trajectory = [ExpandedTrajectory(pose, next_node, self.linear_speed, self.angular_speed, time, edge)]
+        self.trajectory = [Trajectory(pose, next_node, self.linear_speed, self.angular_speed, time, edge)]
     
     def collision_check(self,check_trajectory): #TODO: could weigh cases differently
         self.propogate(check_trajectory.end_time) #propogate out for horizon
@@ -545,7 +545,7 @@ class Particle():
                 best_edge     = edge
         start_pose = self.trajectory[-1].end_pose
         time = self.trajectory[-1].end_time
-        self.trajectory.append(ExpandedTrajectory(start_pose, next_node, self.linear_speed, self.angular_speed, time, best_edge))  
+        self.trajectory.append(Trajectory(start_pose, next_node, self.linear_speed, self.angular_speed, time, best_edge))  
 
     def _random_behavior(self):
         end_node = self.trajectory[-1].next_node
@@ -555,7 +555,7 @@ class Particle():
 
         start_pose = self.trajectory[-1].end_pose
         time = self.trajectory[-1].end_time
-        self.trajectory.append(ExpandedTrajectory(start_pose, next_node, self.linear_speed, self.angular_speed, time, edge))  
+        self.trajectory.append(Trajectory(start_pose, next_node, self.linear_speed, self.angular_speed, time, edge))  
 
     def get_traj_at_time(self,time):
         if len(self.trajectory) == 0:
@@ -607,17 +607,3 @@ class Particle():
                 return traj_piece.get_pose_at_time(time)
 
         raise Exception("This should never happen")
-
-class ExpandedTrajectory(Trajectory):
-    def __init__(self, start_pose, next_node, linear_speed, angular_speed, start_time, edge, wait_time=0.001) -> None:
-        end_pose = Pose(next_node.get_position())
-        end_pose.set_heading_from_origin(start_pose.get_position())
-        if edge == None:
-            raise Exception("Edge cannot be none")
-        if next_node == None:
-            raise Exception("Next node cannot be none")
-
-        super().__init__(start_pose, end_pose, linear_speed, angular_speed, start_time,wait_time)
-        self.edge = edge
-        self.next_node = next_node
-        self.prev_node = edge.get_connected_node(next_node)
