@@ -30,6 +30,21 @@ Trajectory::Trajectory(Pose start_pose, Pose end_pose, double linear_speed, doub
     _setup_slerp();
 }
 
+Trajectory::Trajectory(Pose start_pose, std::shared_ptr<TraversalNode> next_node, std::shared_ptr<TraversalEdge> edge, double linear_speed, double angular_speed, double start_time, double wait_time)
+    : start_pose(start_pose), end_pose(next_node->get_position()), linear_speed(linear_speed), angular_speed(angular_speed), start_time(start_time), wait_time(wait_time){
+        
+        this->edge = edge;
+        this->next_node = next_node;
+        this->prev_node = edge->get_connected_node(next_node);
+
+        end_pose.set_heading_from_origin(start_pose.get_position());
+        
+        _calculate_times();
+        _setup_slerp();
+
+        return;
+    }
+
 Pose Trajectory::get_pose_at_time(double time) {
 
     if (time <= start_time) {

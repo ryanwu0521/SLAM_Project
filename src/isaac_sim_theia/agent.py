@@ -189,8 +189,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
             fnode = best_path[-1]
             start_pose = None
             if len(best_path) == 1:
-                print(type(fnode.get_position()))
-                print(self.current_pose.get_orientation())
                 start_pose = Pose(position=fnode.get_position(), orientation=self.current_pose.get_orientation())
             else:
                 start_pose = Pose(position=fnode.get_position())
@@ -222,29 +220,3 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         self.global_plan = best_path
         for node in self.graph.nodes:
             node.visited = False
-    
-class CompPath():
-    def __init__(self, cost, path, time=None) -> None:
-        self.cost   = cost
-        self.path   = copy.copy(path)
-        self.time   = time
-        if self.time == None:
-            self.time   = cost
-
-    def __eq__(self, other):
-        return self.cost == other.cost
-    
-    def __ne__(self, other):
-        return self.cost != other.cost
-
-    def __lt__(self, other):
-        return self.cost < other.cost
-    
-    def __le__(self, other):
-        return self.cost <= other.cost
-    
-    def __gt__(self, other):
-        return self.cost > other.cost
-    
-    def __ge__(self, other):
-        return self.cost >= other.cost   
