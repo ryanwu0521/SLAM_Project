@@ -320,10 +320,10 @@ class ParticleFilter():
                     next_node = edge.node1
                 else:
                     next_node = edge.node2
-                self.particles[i] = Particle(pose,edge,next_node,self.graph,self.rand_speed(),self.rand_rot(),self.behavior,time)
+                self.particles[i] = Particle(pose, edge, next_node, self.graph, self.rand_speed(), self.rand_rot(), self.behavior,time)
             return
         for i in range(self.num_particles):
-            self.particles[i] = Particle(pose,edge,next_node,self.graph,self.rand_speed(),self.rand_rot(),self.behavior,time)
+            self.particles[i] = Particle(pose, edge,next_node, self.graph, self.rand_speed(), self.rand_rot(), self.behavior,time)
         return
     
     def clear_visible_particles(self,pose,time):
@@ -426,7 +426,7 @@ class ParticleFilter():
                     break
                 elif p_sum > p:
                     sample = self.particles[j]
-                    new_particles.append(Particle(sample.get_pose_at_time(time),sample.get_edge_at_time(time),sample.get_next_node_at_time(time),self.graph,self.rand_speed(),self.rand_rot(),self.behavior,time))
+                    new_particles.append(Particle(sample.get_pose_at_time(time), sample.get_edge_at_time(time), sample.get_next_node_at_time(time), self.graph,self.rand_speed(),self.rand_rot(),self.behavior,time))
                     break
 
         self.particles = new_particles
@@ -460,150 +460,3 @@ class ParticleFilter():
             if particle.collision_check(trajectory):
                 cost += cost_inc
         return cost
-
-class Particle():
-    def __init__(self,pose,edge,next_node,fgraph,speed,rot,behavior,time) -> None:
-        self.behavior = behavior
-        self.linear_speed = speed
-        self.angular_speed = rot
-        self.graph = fgraph
-        self.trajectory = [Trajectory(pose, next_node, edge, self.linear_speed, self.angular_speed, time)]
-    
-    def collision_check(self,check_trajectory): #TODO: could weigh cases differently
-        self.propogate(check_trajectory.end_time) #propogate out for horizon
-        for traj_piece in self.trajectory:
-            #check time overlap with some cushion
-            if traj_piece.start_time > check_trajectory.end_time+1: 
-                continue #passed by time horizon
-            elif traj_piece.end_time < check_trajectory.start_time-1:
-                continue
-            
-            A = traj_piece.prev_node.key != check_trajectory.prev_node.key
-            B = traj_piece.prev_node.key != check_trajectory.next_node.key
-            C = traj_piece.next_node.key != check_trajectory.next_node.key
-            D = traj_piece.next_node.key != check_trajectory.prev_node.key
-
-            if A and B and C and D: #No interaction
-                continue
-            
-            if (not B) and (not C): #head on collision for sure at some point
-                return True
-            
-            if not A:
-
-                if traj_piece.turn_time < check_trajectory.start_time - 1:
-                    return True
-                
-                if check_trajectory.turn_time < traj_piece.start_time - 1:
-                    return True
-
-            if not B: #possible me hitting particle
-                if traj_piece.turn_time < check_trajectory.end_time - 1:
-                    return True
-                
-            if not C: #possible head on collision at node
-                if abs(traj_piece.end_time - check_trajectory.end_time) < 2:
-                    return True
-                
-            if not D: #possible particle hitting me due to no clearance
-                if check_trajectory.turn_time < traj_piece.end_time - 1:
-                    return True
-
-        return False
-
-    def add_next_traj(self):
-        #Need to code behaviors in for selecting next node
-        if self.behavior == "random":
-            self._random_behavior()
-        elif self.behavior == "forward":
-            self._forward_behavior()
-            pass
-        else:
-            self._random_behavior()
-    
-    def _forward_behavior(self):
-        end_node = self.trajectory[-1].next_node
-
-        heading = self.trajectory[-1].end_pose.get_heading_from_orientation()
-        rand_heading = random.normalvariate(heading,50) #TODO Param
-        while rand_heading < -180:
-            rand_heading += 360
-        while rand_heading > 180:
-            rand_heading -= 360
-        smallest_turn = np.inf
-        best_edge = None
-        # next_node     = None
-        for edge in end_node.edges:
-            test_node = edge.get_connected_node(end_node)
-            edge_heading = math.atan2(test_node.y-end_node.y,test_node.x-end_node.x)/math.pi*180
-            dturn = abs(edge_heading-rand_heading)
-            if(dturn > 180):
-                dturn = 360 - dturn
-            if dturn < smallest_turn:
-                smallest_turn = dturn
-                next_node     = test_node
-                best_edge     = edge
-        start_pose = self.trajectory[-1].end_pose
-        time = self.trajectory[-1].end_time
-        self.trajectory.append(Trajectory(start_pose, next_node, best_edge, self.linear_speed, self.angular_speed, time))  
-
-    def _random_behavior(self):
-        end_node = self.trajectory[-1].next_node
-
-        edge = random.choice(end_node.edges)
-        next_node = edge.get_connected_node(end_node)
-
-        start_pose = self.trajectory[-1].end_pose
-        time = self.trajectory[-1].end_time
-        self.trajectory.append(Trajectory(start_pose, next_node, edge, self.linear_speed, self.angular_speed, time))  
-
-    def get_traj_at_time(self,time):
-        if len(self.trajectory) == 0:
-            raise Exception("trajectory empty for some reason")
-        elif time < self.trajectory[0].start_time:
-            raise Exception("tried to pull a particle history from too far into the past")
-        
-        if time > self.trajectory[-1].end_time:
-            self.propogate(time)
-        
-        for traj_piece in self.trajectory:
-            if time >= traj_piece.start_time and time <= traj_piece.end_time:
-                return traj_piece
-
-        raise Exception("This should never happen")
-    
-    def get_next_node_at_time(self,time):
-        return self.get_traj_at_time(time).next_node
-
-    def get_edge_at_time(self,time):
-        return self.get_traj_at_time(time).edge
-
-    def propogate(self,time):
-        if len(self.trajectory) == 0:
-            raise Exception("somehow trajectory is empty")
-
-        while self.trajectory[-1].end_time < time:
-            self.add_next_traj()
-                
-    def trim_history(self,time):
-        if len(self.trajectory) == 0:
-            warnings.warn("can't trim empty history")
-            return
-        
-        while self.trajectory[0].end_time < time:
-            self.trajectory.pop(0)
-
-    def get_pose_at_time(self,time):
-        if len(self.trajectory) == 0:
-            raise Exception("trajectory empty for some reason")
-        elif time < self.trajectory[0].start_time:
-            raise Exception("tried to pull a particle history from too far into the past")
-        
-        if time > self.trajectory[-1].end_time:
-            self.propogate(time)
-        
-        for traj_piece in self.trajectory:
-            if time >= traj_piece.start_time and time <= traj_piece.end_time:
-                return traj_piece.get_pose_at_time(time)
-
-        raise Exception("This should never happen")

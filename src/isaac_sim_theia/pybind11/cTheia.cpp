@@ -41,7 +41,7 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readwrite("draw_size", &TraversalNode::draw_size)
         .def_readwrite("visited", &TraversalNode::visited);
 
-    py::class_<TraversalGraph>(m, "TraversalGraph")
+    py::class_<TraversalGraph, std::shared_ptr<TraversalGraph>>(m, "TraversalGraph")
         .def(py::init<std::string>())
         .def("load_file", &TraversalGraph::load_file)
         .def("add_edge", &TraversalGraph::add_edge)
@@ -50,7 +50,7 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readwrite("nodes",&TraversalGraph::nodes)
         .def_readwrite("edges",&TraversalGraph::edges); //TODO, possibly use setters/getters
 
-    py::class_<Rotation>(m, "Rotation")
+    py::class_<Rotation, std::shared_ptr<Rotation>>(m, "Rotation")
         .def(py::init<std::array<double, 4>>())
         .def("as_quat", &Rotation::as_quat, py::arg("scalar_last") = true)
         .def("as_euler", (std::array<double, 3> (Rotation::*)(std::string, bool) const) &Rotation::as_euler, py::arg("order") = "XYZ", py::arg("degrees") = false)
@@ -63,11 +63,11 @@ PYBIND11_MODULE(cTheia, m) {
         .def_static("normalize_quaternion", &Rotation::normalize_quaternion)
         .def_static("multiply_quaternions", &Rotation::multiply_quaternions);
 
-    py::class_<Slerp>(m, "Slerp")
+    py::class_<Slerp, std::shared_ptr<Slerp>>(m, "Slerp")
         .def(py::init<std::vector<Rotation>, std::vector<double>>())
         .def("__call__", &Slerp::operator());
 
-    py::class_<Pose>(m, "Pose")
+    py::class_<Pose, std::shared_ptr<Pose>>(m, "Pose")
         .def(py::init<std::array<double, 3>, Rotation>(),
              py::arg("position") = std::array<double, 3>{0.0, 0.0, 0.0},
              py::arg("orientation") = Rotation::identity())
@@ -85,7 +85,7 @@ PYBIND11_MODULE(cTheia, m) {
         .def("set_orientation", &Pose::set_orientation)
         .def("set_position", &Pose::set_position);
 
-    py::class_<Trajectory>(m, "Trajectory")
+    py::class_<Trajectory, std::shared_ptr<Trajectory>>(m, "Trajectory")
         .def(py::init<Pose, Pose, double, double, double, double>(),
              py::arg("start_pose"), py::arg("end_pose"), py::arg("linear_speed"),
              py::arg("angular_speed"), py::arg("start_time"), py::arg("wait_time") = 0.001)
@@ -106,7 +106,7 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readonly("prev_node", &Trajectory::prev_node)
         .def_readonly("edge", &Trajectory::edge);
 
-    py::class_<CompPath>(m, "CompPath")
+    py::class_<CompPath, std::shared_ptr<CompPath>>(m, "CompPath")
         .def(py::init<double, const std::vector<std::shared_ptr<TraversalNode>>&, double>(), py::arg("cost"), py::arg("path"), py::arg("time") = -1)
         .def("__eq__", &CompPath::operator==)
         .def("__ne__", &CompPath::operator!=)
@@ -118,12 +118,14 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readonly("path", &CompPath::path)
         .def_readonly("time", &CompPath::time);
 
-    py::class_<Particle>(m, "Particle")
+    py::class_<Particle,std::shared_ptr<Particle>>(m, "Particle")
         .def(py::init<Pose, std::shared_ptr<TraversalEdge>, std::shared_ptr<TraversalNode>, std::shared_ptr<TraversalGraph>, double, double, const std::string&, double>())
         .def("collision_check", &Particle::collision_check)
         .def("add_next_traj", &Particle::add_next_traj)
         .def("trim_history", &Particle::trim_history)
         .def("get_pose_at_time", &Particle::get_pose_at_time)
+        .def("get_edge_at_time", &Particle::get_edge_at_time)
+        .def("get_next_node_at_time", &Particle::get_next_node_at_time)
         .def("_forward_behavior", &Particle::_forward_behavior)
         .def("_random_behavior", &Particle::_random_behavior)
         .def("propogate", &Particle::propogate)

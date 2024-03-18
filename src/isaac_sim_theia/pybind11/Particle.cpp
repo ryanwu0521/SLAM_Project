@@ -6,7 +6,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-Particle::Particle(Pose pose, const std::shared_ptr<TraversalEdge> edge, const std::shared_ptr<TraversalNode> next_node, const std::shared_ptr<TraversalGraph> fgraph, double speed, double rot, const std::string& behavior, double time)
+Particle::Particle(Pose pose, const std::shared_ptr<TraversalEdge> edge, const std::shared_ptr<TraversalNode> next_node, const std::shared_ptr<TraversalGraph> fgraph, double speed, double rot, const std::string behavior, double time)
     : behavior(behavior), linear_speed(speed), angular_speed(rot), graph(fgraph) {
     trajectory.emplace_back(std::make_shared<Trajectory>(pose, next_node, edge, linear_speed, angular_speed, time));
 }
@@ -123,6 +123,40 @@ Pose Particle::get_pose_at_time(double time) {
     for (const std::shared_ptr<Trajectory> traj_piece : trajectory) {
         if (time >= traj_piece->start_time && time <= traj_piece->end_time)
             return traj_piece->get_pose_at_time(time);
+    }
+
+    throw std::runtime_error("This should never happen");
+}
+
+std::shared_ptr<TraversalEdge> Particle::get_edge_at_time(double time){
+    if (trajectory.empty())
+        throw std::runtime_error("trajectory empty for some reason");
+    else if (time < trajectory.front()->start_time)
+        throw std::runtime_error("tried to pull a particle history from too far into the past");
+
+    if (time > trajectory.back()->end_time)
+        propogate(time);
+
+    for (const std::shared_ptr<Trajectory> traj_piece : trajectory) {
+        if (time >= traj_piece->start_time && time <= traj_piece->end_time)
+            return traj_piece->edge;
+    }
+
+    throw std::runtime_error("This should never happen");
+}
+
+std::shared_ptr<TraversalNode> Particle::get_next_node_at_time(double time){
+    if (trajectory.empty())
+        throw std::runtime_error("trajectory empty for some reason");
+    else if (time < trajectory.front()->start_time)
+        throw std::runtime_error("tried to pull a particle history from too far into the past");
+
+    if (time > trajectory.back()->end_time)
+        propogate(time);
+
+    for (const std::shared_ptr<Trajectory> traj_piece : trajectory) {
+        if (time >= traj_piece->start_time && time <= traj_piece->end_time)
+            return traj_piece->next_node;
     }
 
     throw std::runtime_error("This should never happen");
