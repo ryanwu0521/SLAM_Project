@@ -206,10 +206,6 @@ class TrackedObject():
 
     def get_pose(self):
         pose = self.prim.get_world_pose()
-        orientation_scalar_first = pose[1]
-        orientation_scalar_last  = np.zeros(4)
-        orientation_scalar_last[3]  = orientation_scalar_first[0]
-        orientation_scalar_last[:3]  = orientation_scalar_first[1:]
         fpose = Pose(pose[0])
         fpose.set_heading_from_isaac_quat(pose[1])
         return fpose
@@ -331,7 +327,6 @@ class ParticleFilter():
             self.last_update = time
         else:
             return
-        
         likelihoods = np.ones(self.num_particles)*.5
         particle_seen = [False] * self.num_particles
         heading1 = pose.get_heading_from_orientation()
@@ -344,7 +339,7 @@ class ParticleFilter():
                 heading_to_particle -=360
             if heading_to_particle < -180:
                 heading_to_particle += 360
-
+            # print(abs(heading_to_particle))
             if abs(heading_to_particle) < 50:
                 likelihoods[i] = .01
                 particle_seen[i] = True
@@ -357,6 +352,7 @@ class ParticleFilter():
         for i in range(self.num_particles):
             if not particle_seen[i]:
                 continue
+            # print("clearing particle")
             p_sum = 0
             p = random.random()
             for j in range(self.num_particles):
@@ -395,8 +391,8 @@ class ParticleFilter():
 
             if del_2 > 180:
                 del_2 = 360 - del_2
-
             p1 = del_2/(del_1+del_2)
+            # print(str(heading) + " : " + str(del_1) + " : " + str(del_2) + " : " + str(p1))
 
         for i in range(self.num_particles):
             ppose = self.particles[i].get_pose_at_time(time)

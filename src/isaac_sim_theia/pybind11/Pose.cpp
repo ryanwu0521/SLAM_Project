@@ -15,8 +15,8 @@ bool Pose::operator==(const Pose& object) const {
     return (position[0] == object.position[0] && position[1] == object.position[1] && get_heading_from_orientation() == object.get_heading_from_orientation());
 }
 
-void Pose::set_heading_from_isaac_quat(std::array<double, 4> quat_s_last) {
-    orientation = Rotation::from_quat(quat_s_last);
+void Pose::set_heading_from_isaac_quat(std::array<double, 4> quat_s_first) {
+    orientation = Rotation::from_quat(quat_s_first , false);
 }
 
 std::array<double, 4> Pose::get_quat_scalar_first() const {
@@ -47,14 +47,11 @@ void Pose::set_heading_from_origin(const std::array<double, 3>& origin) {
 
 void Pose::randomize_orientation() {
     std::array<double, 4> quat;
-    quat[0] = 0; // Assuming scalar last convention
-    quat[1] = 0; // Assuming scalar last convention
-    quat[2] = 0; // Assuming scalar last convention
-    quat[3] = rand() % 361; // Assuming scalar last convention
-    orientation = Rotation::from_quat(quat);
+    double angle = rand() % 361;
+    set_heading_from_angle(angle, true);
 }
 
-double Pose::get_heading_from_orientation() const {
+double Pose::get_heading_from_orientation() const { //TODO: Add degree vs Rad handling option
     std::array<double, 3> euler_angles = orientation.as_euler("XYZ", true);
     return euler_angles[2];
 }
