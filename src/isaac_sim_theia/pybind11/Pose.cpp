@@ -47,11 +47,8 @@ void Pose::set_heading_from_origin(const std::array<double, 3>& origin) {
 
 void Pose::randomize_orientation() {
     std::array<double, 4> quat;
-    quat[0] = 0; // Assuming scalar last convention
-    quat[1] = 0; // Assuming scalar last convention
-    quat[2] = 0; // Assuming scalar last convention
-    quat[3] = rand() % 361; // Assuming scalar last convention
-    orientation = Rotation::from_quat(quat);
+    double angle = rand() % 361;
+    orientation = set_heading_from_angle(angle, true);
 }
 
 double Pose::get_heading_from_orientation() const {
