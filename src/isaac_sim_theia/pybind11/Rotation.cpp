@@ -112,7 +112,7 @@ std::array<double, 3> Rotation::as_euler(std::string order, bool degrees) const{
 
 
 // Static method to create a Rotation object from Euler angles
-Rotation Rotation::from_euler(std::string order, std::vector<double> values, bool degrees) {
+Rotation Rotation::from_euler(std::string order, std::vector<double> values, bool degrees) { //TODO: Unsure if this is right
 
     if(order.length() != values.size()){
         throw std::invalid_argument("Number of provided axis from input string " + order + " : " + std::to_string(order.length()) + " does not match number of provided angles " + std::to_string(values.size()));
