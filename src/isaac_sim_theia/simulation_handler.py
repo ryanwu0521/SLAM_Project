@@ -28,7 +28,7 @@ class QualSimulationHandler:
         self.graph = c.TraversalGraph('src/isaac_sim_theia/graphs/test_world_1_graph.json')
         self.load_stage()
 
-        self.world = World(physics_dt=.1,rendering_dt=.1)
+        self.world = World(physics_dt=.5,rendering_dt=.5)
         self.physx = self.world.get_physics_context()
         self.physx.set_gravity(0.0)
         self.world.initialize_physics()
@@ -72,8 +72,8 @@ class QualSimulationHandler:
         #     self.theia_1.tracked_objects[0].particle_filter.draw_particles(self.world.current_time + 8)
         self.draw_path()
         self.draw_goal()
-        self.draw_cool_filter(10)
-        self.draw_simple_robots()
+        # self.draw_cool_filter(10)
+        # self.draw_simple_robots()
         pass
     
     def draw_graph(self):

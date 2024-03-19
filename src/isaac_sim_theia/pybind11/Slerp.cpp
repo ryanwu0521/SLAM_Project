@@ -75,7 +75,7 @@ Rotation Slerp::operator()(double time) const {
     if (times_.empty()) {
         throw std::runtime_error("Times vector is empty");
     }
-
+    
     // Check if the provided time is out of bounds
     if (time < times_.front() || time > times_.back()) {
         throw std::invalid_argument("Time is out of bounds");
@@ -90,15 +90,15 @@ Rotation Slerp::operator()(double time) const {
         }
     }
 
-    if(time == times_[index]){
-        slerp(rotations_[index], rotations_[index + 1], 0);
-    } else if(time == times_[index+1]){
-        slerp(rotations_[index], rotations_[index + 1], 1);
+    if(time <= times_[index]){
+        return slerp(rotations_[index], rotations_[index + 1], 0);
+    } else if(time >= times_[index+1]){
+        return slerp(rotations_[index], rotations_[index + 1], 1);
     }
-
-    // Interpolation factor
-    double factor = (time - times_[index]) / (times_[index + 1] - times_[index]);
-
-    // Perform SLERP interpolation
-    return slerp(rotations_[index], rotations_[index + 1], factor);
+    else{
+        // Interpolation factor
+        double factor = (time - times_[index]) / (times_[index + 1] - times_[index]);
+        // Perform SLERP interpolation
+        return slerp(rotations_[index], rotations_[index + 1], factor);
+    }
 }

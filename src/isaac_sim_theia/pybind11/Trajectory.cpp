@@ -68,7 +68,7 @@ Pose Trajectory::get_pose_at_time(double time) {
         fposition[2] = t * (end_pose.get_position()[2] - start_pose.get_position()[2]) + start_pose.get_position()[2];
     }
 
-    return Pose(fposition, (*slerp)(time));
+    return Pose(fposition, end_pose.get_orientation());
 }
 
 bool Trajectory::is_finished(double time) {
