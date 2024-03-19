@@ -36,23 +36,23 @@ class QualSimulationHandler:
         omni.timeline.get_timeline_interface().play()
 
         self.forklift_1   = agent.Agent(self.graph,"src/isaac_sim_theia/config/forklift.json",self.world) 
-        self.forklift_1.randomize_position()
-        self.forklift_1.randomize_goal()
+        # self.forklift_1.randomize_position()
+        # self.forklift_1.randomize_goal()
         self.forklift_1.set_position_to_node(self.graph.nodes[0],0)
         self.forklift_1.set_goal(self.graph.nodes[48])
-        self.forklift_1.randomize_position()
+        # self.forklift_1.randomize_position()
 
         self.theia_1  = theia.Theia(self.graph,"src/isaac_sim_theia/config/theia_robot.json",self.world)
         self.theia_1.set_position_to_node(self.graph.nodes[5],180)
         self.theia_1.set_goal(self.graph.nodes[53])
-        self.theia_1.randomize_position()
+        # self.theia_1.randomize_position()
 
-        while self.theia_1.current_node == self.forklift_1.current_node: #making sure they aren't overlapping to start
-            self.theia_1.randomize_position()
+        # while self.theia_1.current_node == self.forklift_1.current_node: #making sure they aren't overlapping to start
+        #     self.theia_1.randomize_position()
 
-        self.theia_1.randomize_goal()
-        while self.theia_1.goal_node == self.forklift_1.goal_node: #making sure that they aren't routing to the exact same node
-            self.theia_1.randomize_goal()
+        # self.theia_1.randomize_goal()
+        # while self.theia_1.goal_node == self.forklift_1.goal_node: #making sure that they aren't routing to the exact same node
+        #     self.theia_1.randomize_goal()
 
         self.kit.update()
         self.kit.update()
@@ -70,10 +70,10 @@ class QualSimulationHandler:
         self.draw_graph()
         # if self.theia_1.tracked_objects[0].particle_filter != None:
         #     self.theia_1.tracked_objects[0].particle_filter.draw_particles(self.world.current_time + 8)
-        # self.draw_path()
-        # self.draw_goal()
-        # self.draw_cool_filter(10)
-        # self.draw_simple_robots()
+        self.draw_path()
+        self.draw_goal()
+        self.draw_cool_filter(10)
+        self.draw_simple_robots()
         pass
     
     def draw_graph(self):
