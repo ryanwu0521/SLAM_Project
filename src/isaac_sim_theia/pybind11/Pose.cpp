@@ -48,7 +48,7 @@ void Pose::set_heading_from_origin(const std::array<double, 3>& origin) {
 void Pose::randomize_orientation() {
     std::array<double, 4> quat;
     double angle = rand() % 361;
-    orientation = set_heading_from_angle(angle, true);
+    set_heading_from_angle(angle, true);
 }
 
 double Pose::get_heading_from_orientation() const {
