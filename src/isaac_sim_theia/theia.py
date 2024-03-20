@@ -243,7 +243,6 @@ class TrackedObject():
         observed = self.is_observed()
         if self.particle_filter == None:
             if observed:
-                print(type(self.particle_filter_dict))
                 self.particle_filter = ParticleFilter(self.particle_filter_dict,self.graph,self.get_pose(),self.world.current_time)
             return
         

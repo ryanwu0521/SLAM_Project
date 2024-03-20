@@ -58,12 +58,21 @@ class QualSimulationHandler:
         self.kit.update()
         self.kit.update()
 
+
+    def draw_particles(self,time,color=np.array([1, 1, 0, .2])):
+        
+        for object in  self.theia_1.tracked_objects:
+            object.particle_filter.propogate_particles(time)
+
+            for particle in object.particle_filter.particles:
+                self.draw.draw_points([particle.get_pose_at_time(time).get_position()],[color],[20])
+
     def draw_cool_filter(self,t):
         
         if self.theia_1.tracked_objects[0].particle_filter == None:
             return
         for i in range(t):
-            self.theia_1.tracked_objects[0].particle_filter.draw_particles(self.world.current_time + i,(1,(i)/t,0,.05))
+            self.draw_particles(self.world.current_time + i,(1,(i)/t,0,.1))
 
     def draw_update(self):
         #TODO: Consider compiling draw list first to limit calls
@@ -72,7 +81,7 @@ class QualSimulationHandler:
         #     self.theia_1.tracked_objects[0].particle_filter.draw_particles(self.world.current_time + 8)
         self.draw_path()
         self.draw_goal()
-        # self.draw_cool_filter(10)
+        self.draw_cool_filter(10)
         # self.draw_simple_robots()
         pass
     

@@ -162,5 +162,7 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readwrite("num_particles", &ParticleFilter::num_particles)
         .def_readwrite("position_variance", &ParticleFilter::position_variance)
         .def_readwrite("angle_variance", &ParticleFilter::angle_variance)
-        .def_readwrite("update_rate", &ParticleFilter::update_rate);
+        .def_readwrite("update_rate", &ParticleFilter::update_rate)
+        .def_readonly("particles", &ParticleFilter::particles);
+
 }
