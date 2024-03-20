@@ -16,7 +16,7 @@
             "prim_path":"/World/forklift",
             "observation_style":"FOV",
             "dropout_time":120,
-            "avoidance_cost":1000,
+            "avoidance_cost":100,
             "particle_filter_dict":{
                 "spawn_rate": 0.5,
                 "avg_speed":1.0,

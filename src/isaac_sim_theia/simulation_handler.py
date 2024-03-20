@@ -205,7 +205,7 @@ class QualSimulationHandler:
         self.forklift_1.spin_once()
         self.theia_1.spin_once()
 
-        if np.sqrt((self.theia_1.current_pose.get_position()[0]-self.forklift_1.current_pose.get_position()[0])**2+(self.theia_1.current_pose.get_position()[1]-self.forklift_1.current_pose.get_position()[1])**2) < 1:
+        if np.sqrt((self.theia_1.current_pose.get_position()[0]-self.forklift_1.current_pose.get_position()[0])**2+(self.theia_1.current_pose.get_position()[1]-self.forklift_1.current_pose.get_position()[1])**2) < 3:
             #TODO:Cleanup this implementation
             self.theia_1.clear_goal()
             self.theia_1.clear_next_node()
