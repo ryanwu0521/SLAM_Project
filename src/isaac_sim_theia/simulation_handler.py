@@ -81,7 +81,7 @@ class QualSimulationHandler:
         #     self.theia_1.tracked_objects[0].particle_filter.draw_particles(self.world.current_time + 8)
         self.draw_path()
         self.draw_goal()
-        self.draw_cool_filter(10)
+        # self.draw_cool_filter(10)
         # self.draw_simple_robots()
         pass
     
@@ -171,7 +171,7 @@ class QualSimulationHandler:
 
 
     def spin(self) -> None:
-        self.world.pause()
+        # self.world.pause()
         while self.kit.is_running():
             self.spin_once()
 
@@ -210,10 +210,9 @@ class QualSimulationHandler:
         file.close
 
     def spin_once(self):
-        self.draw_update()
+        # self.draw_update()
         self.forklift_1.spin_once()
         self.theia_1.spin_once()
-
         if np.sqrt((self.theia_1.current_pose.get_position()[0]-self.forklift_1.current_pose.get_position()[0])**2+(self.theia_1.current_pose.get_position()[1]-self.forklift_1.current_pose.get_position()[1])**2) < 3:
             #TODO:Cleanup this implementation
             self.theia_1.clear_goal()
@@ -232,8 +231,8 @@ class QualSimulationHandler:
             self.log_collision_to_file("results/tdsp1.txt")
 
         self.kit.update()
-        self.draw.clear_points()
-        self.draw.clear_lines()
+        # self.draw.clear_points()
+        # self.draw.clear_lines()
         
     
     
