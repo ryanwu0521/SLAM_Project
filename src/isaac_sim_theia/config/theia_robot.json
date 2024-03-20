@@ -16,18 +16,18 @@
             "prim_path":"/World/forklift",
             "observation_style":"FOV",
             "dropout_time":120,
-            "avoidance_cost":1000,
+            "avoidance_cost":5,
             "particle_filter_dict":{
-                "spawn_rate": 0.5,
-                "avg_speed":1.0,
-                "dev_speed":0.1,
-                "avg_rot":60,
-                "dev_rot":6,
+                "spawn_rate": "0.5",
+                "avg_speed":"1.0",
+                "dev_speed":"0.1",
+                "avg_rot":"60",
+                "dev_rot":"6",
                 "behavior":"forward",
-                "num_particles":100,
-                "position_variance":0.1,
-                "angle_variance":10,
-                "update_rate":0.25
+                "num_particles":"100",
+                "position_variance":"0.1",
+                "angle_variance":"10",
+                "update_rate":"0.25"
             }
         }
     ]

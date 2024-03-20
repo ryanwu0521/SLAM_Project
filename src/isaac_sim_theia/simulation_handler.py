@@ -58,12 +58,21 @@ class QualSimulationHandler:
         self.kit.update()
         self.kit.update()
 
+
+    def draw_particles(self,time,color=np.array([1, 1, 0, .2])):
+        
+        for object in  self.theia_1.tracked_objects:
+            object.particle_filter.propogate_particles(time)
+
+            for particle in object.particle_filter.particles:
+                self.draw.draw_points([particle.get_pose_at_time(time).get_position()],[color],[20])
+
     def draw_cool_filter(self,t):
         
         if self.theia_1.tracked_objects[0].particle_filter == None:
             return
         for i in range(t):
-            self.theia_1.tracked_objects[0].particle_filter.draw_particles(self.world.current_time + i,(1,(i)/t,0,.05))
+            self.draw_particles(self.world.current_time + i,(1,(i)/t,0,.1))
 
     def draw_update(self):
         #TODO: Consider compiling draw list first to limit calls
@@ -162,7 +171,7 @@ class QualSimulationHandler:
 
 
     def spin(self) -> None:
-        self.world.pause()
+        # self.world.pause()
         while self.kit.is_running():
             self.spin_once()
 
@@ -201,11 +210,10 @@ class QualSimulationHandler:
         file.close
 
     def spin_once(self):
-        self.draw_update()
+        # self.draw_update()
         self.forklift_1.spin_once()
         self.theia_1.spin_once()
-
-        if np.sqrt((self.theia_1.current_pose.get_position()[0]-self.forklift_1.current_pose.get_position()[0])**2+(self.theia_1.current_pose.get_position()[1]-self.forklift_1.current_pose.get_position()[1])**2) < 1:
+        if np.sqrt((self.theia_1.current_pose.get_position()[0]-self.forklift_1.current_pose.get_position()[0])**2+(self.theia_1.current_pose.get_position()[1]-self.forklift_1.current_pose.get_position()[1])**2) < 3:
             #TODO:Cleanup this implementation
             self.theia_1.clear_goal()
             self.theia_1.clear_next_node()
@@ -223,8 +231,8 @@ class QualSimulationHandler:
             self.log_collision_to_file("results/tdsp1.txt")
 
         self.kit.update()
-        self.draw.clear_points()
-        self.draw.clear_lines()
+        # self.draw.clear_points()
+        # self.draw.clear_lines()
         
     
     

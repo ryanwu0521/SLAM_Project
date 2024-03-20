@@ -7,6 +7,10 @@
 #include "include/Trajectory.hpp"
 #include "include/CompPath.hpp"
 #include "include/Particle.hpp"
+#include "include/ParticleFilter.hpp"
+
+#include <pybind11/functional.h>
+#include <pybind11/complex.h>
 
 namespace py = pybind11;
 
@@ -134,4 +138,31 @@ PYBIND11_MODULE(cTheia, m) {
         .def_readwrite("angular_speed", &Particle::angular_speed)
         .def_readwrite("graph", &Particle::graph)
         .def_readwrite("trajectory", &Particle::trajectory);
+
+    py::class_<ParticleFilter, std::shared_ptr<ParticleFilter>>(m, "ParticleFilter")
+        .def(py::init<std::unordered_map<std::string, std::string>, std::shared_ptr<TraversalGraph>, std::shared_ptr<Pose>, double>())
+        .def("initialize_particles", &ParticleFilter::initialize_particles)
+        .def("clear_visible_particles", &ParticleFilter::clear_visible_particles)
+        .def("update_particles", &ParticleFilter::update_particles)
+        .def("propogate_particles", &ParticleFilter::propogate_particles)
+        .def("trim_history", &ParticleFilter::trim_history)
+        .def("rand_speed", &ParticleFilter::rand_speed)
+        .def("rand_rot", &ParticleFilter::rand_rot)
+        .def("calculate_cost", &ParticleFilter::calculate_cost)
+        .def("normalize_likelihoods", &ParticleFilter::normalize_likelihoods)
+        .def_readwrite("last_update", &ParticleFilter::last_update)
+        .def_readwrite("draw_size", &ParticleFilter::draw_size)
+        .def_readwrite("draw_color", &ParticleFilter::draw_color)
+        .def_readwrite("spawn_rate", &ParticleFilter::spawn_rate)
+        .def_readwrite("avg_speed", &ParticleFilter::avg_speed)
+        .def_readwrite("dev_speed", &ParticleFilter::dev_speed)
+        .def_readwrite("avg_rot", &ParticleFilter::avg_rot)
+        .def_readwrite("dev_rot", &ParticleFilter::dev_rot)
+        .def_readwrite("behavior", &ParticleFilter::behavior)
+        .def_readwrite("num_particles", &ParticleFilter::num_particles)
+        .def_readwrite("position_variance", &ParticleFilter::position_variance)
+        .def_readwrite("angle_variance", &ParticleFilter::angle_variance)
+        .def_readwrite("update_rate", &ParticleFilter::update_rate)
+        .def_readonly("particles", &ParticleFilter::particles);
+
 }
