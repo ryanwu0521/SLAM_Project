@@ -8,15 +8,15 @@ from setuptools import setup, Extension
 import pybind11
 
 # Set the name of the module and the source files
-module_name = "cTheia"
-source_files = glob.glob("src/isaac_sim_theia/pybind11/*.cpp")
-source_files.append("src/isaac_sim_theia/jsoncpp/jsoncpp.cpp")
+module_name = "cTheiaSLAM"
+source_files = glob.glob("src/TheiaSLAM/cTheiaSLAM/*.cpp")
+source_files.append("src/TheiaSLAM/jsoncpp/jsoncpp.cpp")
 
 # Create the extension module
 extension = Extension(
     name=module_name,
     sources=source_files,
-    include_dirs=["src/isaac_sim_theia/jsoncpp", pybind11.get_include()],
+    include_dirs=["src/TheiaSLAM/jsoncpp", pybind11.get_include()],
     language="c++"
 )
 

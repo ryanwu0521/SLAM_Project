@@ -36,7 +36,7 @@ def run_windows_system(args):
     file_path = os.getcwd() + "/" + args.file_path
     print(os.path.isfile(isaac_path + "/python.bat"))
     print([isaac_path+"/python.bat", " -m pip install ."])
-    subprocess.run([isaac_path+"/python.bat", "-m","pip","uninstall","cTheia","-y"])
+    subprocess.run([isaac_path+"/python.bat", "-m","pip","uninstall","cTheiaSLAM","-y"])
     exit()
 
 def run_linux_system(args):
