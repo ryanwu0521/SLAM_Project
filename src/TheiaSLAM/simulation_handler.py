@@ -25,7 +25,7 @@ class QualSimulationHandler:
         #TODO: Add in functionality to choose world
         self.kit = kit
         self.draw = _debug_draw.acquire_debug_draw_interface()
-        self.graph = c.TraversalGraph('src/isaac_sim_theia/graphs/test_world_1_graph.json')
+        self.graph = c.TraversalGraph('src/TheiaSLAM/graphs/test_world_1_graph.json')
         self.load_stage()
 
         self.world = World(physics_dt=.5,rendering_dt=.5)
@@ -35,14 +35,14 @@ class QualSimulationHandler:
 
         omni.timeline.get_timeline_interface().play()
 
-        self.forklift_1   = agent.Agent(self.graph,"src/isaac_sim_theia/config/forklift.json",self.world) 
+        self.forklift_1   = agent.Agent(self.graph,"src/TheiaSLAM/config/forklift.json",self.world) 
         # self.forklift_1.randomize_position()
         # self.forklift_1.randomize_goal()
         self.forklift_1.set_position_to_node(self.graph.nodes[0],0)
         self.forklift_1.set_goal(self.graph.nodes[48])
         # self.forklift_1.randomize_position()
 
-        self.theia_1  = theia.Theia(self.graph,"src/isaac_sim_theia/config/theia_robot.json",self.world)
+        self.theia_1  = theia.Theia(self.graph,"src/TheiaSLAM/config/theia_robot.json",self.world)
         self.theia_1.set_position_to_node(self.graph.nodes[5],180)
         self.theia_1.set_goal(self.graph.nodes[53])
         # self.theia_1.randomize_position()
@@ -217,8 +217,8 @@ class QualSimulationHandler:
             #TODO:Cleanup this implementation
             self.theia_1.clear_goal()
             self.theia_1.clear_next_node()
-            # self.theia_1 = agent.Agent(self.graph,"/home/grntmtz/Desktop/qual_simulation/src/isaac_sim_theia/config/theia_robot.json",self.world)
-            self.theia_1 = theia.Theia(self.graph,"src/isaac_sim_theia/config/theia_robot.json",self.world)
+            # self.theia_1 = agent.Agent(self.graph,"/home/grntmtz/Desktop/qual_simulation/src/TheiaSLAM/config/theia_robot.json",self.world)
+            self.theia_1 = theia.Theia(self.graph,"src/TheiaSLAM/config/theia_robot.json",self.world)
             self.theia_1.randomize_position()
 
             while self.theia_1.current_node == self.forklift_1.current_node: #making sure they aren't overlapping to start

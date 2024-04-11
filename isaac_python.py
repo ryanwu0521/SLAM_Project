@@ -84,7 +84,7 @@ def run_linux_system(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--file_path", type=str,default="src/isaac_sim_theia/main.py",help="path to python script to run in isaac")
+    parser.add_argument("--file_path", type=str,default="src/TheiaSLAM/main.py",help="path to python script to run in isaac")
     args = parser.parse_args()
     # print(os.getcwd()+"/"+args.file_path)
     python_ver = platform.python_version_tuple()
