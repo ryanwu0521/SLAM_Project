@@ -88,6 +88,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # print(os.getcwd()+"/"+args.file_path)
     python_ver = platform.python_version_tuple()
+
+    if(not os.path.exists("results")):
+       os.mkdir("results")
+
     if int(python_ver[0]) != 3:
         print("Only supported for python3")
         exit()
