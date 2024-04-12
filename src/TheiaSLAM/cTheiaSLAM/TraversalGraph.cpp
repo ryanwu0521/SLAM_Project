@@ -1,6 +1,6 @@
 // TraversalGraph.cpp
 
-#include "../jsoncpp/json/json.h"
+#include "../external/jsoncpp/json/json.h"
 #include "include/TraversalGraph.hpp"
 #include "include/TraversalNode.hpp"
 #include "include/TraversalEdge.hpp"

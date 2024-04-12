@@ -3,7 +3,7 @@
 #ifndef TRAVERSAL_NODE_HPP
 #define TRAVERSAL_NODE_HPP
 
-#include "../jsoncpp/json/json.h" // Updated location for json/json.h
+#include "../external/jsoncpp/json/json.h" // Updated location for json/json.h
 #include <vector>
 
 class TraversalEdge; // Forward declaration

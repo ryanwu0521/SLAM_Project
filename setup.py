@@ -10,7 +10,7 @@ import pybind11
 # Set the name of the module and the source files
 module_name = "cTheiaSLAM"
 source_files = glob.glob("src/TheiaSLAM/cTheiaSLAM/*.cpp")
-source_files.append("src/TheiaSLAM/jsoncpp/jsoncpp.cpp")
+source_files.append("src/TheiaSLAM/external/jsoncpp/jsoncpp.cpp")
 
 # Create the extension module
 extension = Extension(

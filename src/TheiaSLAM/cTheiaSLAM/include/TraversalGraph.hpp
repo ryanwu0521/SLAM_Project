@@ -5,7 +5,7 @@
 
 #include "TraversalNode.hpp"
 #include "TraversalEdge.hpp"
-#include "../jsoncpp/json/json.h" // Updated location for json/json.h
+#include "../external/jsoncpp/json/json.h" // Updated location for json/json.h
 #include <vector>
 #include <string>
 
