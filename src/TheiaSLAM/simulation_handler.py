@@ -58,7 +58,6 @@ class QualSimulationHandler:
         self.kit.update()
         self.kit.update()
 
-
     def draw_particles(self,time,color=np.array([1, 1, 0, .2])):
         
         for object in  self.theia_1.tracked_objects:
@@ -167,8 +166,6 @@ class QualSimulationHandler:
             # self.draw.draw_points([node.get_position()],[dot_color],[dot_size])
             self.draw.draw_lines([node.get_position()],[prev_position],[dot_color],[5])
             prev_position = node.get_position()
-
-
 
     def spin(self) -> None:
         # self.world.pause()
