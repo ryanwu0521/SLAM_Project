@@ -11,5 +11,5 @@ import simulation_handler
 
 if __name__ == "__main__":
     
-    sim = simulation_handler.QualSimulationHandler(kit)
+    sim = simulation_handler.SLAMSimulationHandler(kit)
     sim.spin()

@@ -15,10 +15,9 @@ import random
 
 import cTheiaSLAM as c 
 import agent
-import theia 
 import time 
 
-class QualSimulationHandler:
+class SLAMSimulationHandler:
 
     def __init__(self, kit) -> None:
         
@@ -42,7 +41,7 @@ class QualSimulationHandler:
         self.forklift_1.set_goal(self.graph.nodes[48])
         # self.forklift_1.randomize_position()
 
-        self.theia_1  = theia.Theia(self.graph,"src/TheiaSLAM/config/theia_robot.json",self.world)
+        self.theia_1  = agent.Agent(self.graph,"src/TheiaSLAM/config/theia_robot.json",self.world)
         self.theia_1.set_position_to_node(self.graph.nodes[5],180)
         self.theia_1.set_goal(self.graph.nodes[53])
         # self.theia_1.randomize_position()
@@ -58,6 +57,7 @@ class QualSimulationHandler:
         self.kit.update()
         self.kit.update()
 
+    #TODO: Break out to drawing utility class?
     def draw_particles(self,time,color=np.array([1, 1, 0, .2])):
         
         for object in  self.theia_1.tracked_objects:
@@ -207,29 +207,10 @@ class QualSimulationHandler:
         file.close
 
     def spin_once(self):
-        # self.draw_update()
+
         self.forklift_1.spin_once()
         self.theia_1.spin_once()
-        if np.sqrt((self.theia_1.current_pose.get_position()[0]-self.forklift_1.current_pose.get_position()[0])**2+(self.theia_1.current_pose.get_position()[1]-self.forklift_1.current_pose.get_position()[1])**2) < 3:
-            #TODO:Cleanup this implementation
-            self.theia_1.clear_goal()
-            self.theia_1.clear_next_node()
-            # self.theia_1 = agent.Agent(self.graph,"/home/grntmtz/Desktop/qual_simulation/src/TheiaSLAM/config/theia_robot.json",self.world)
-            self.theia_1 = theia.Theia(self.graph,"src/TheiaSLAM/config/theia_robot.json",self.world)
-            self.theia_1.randomize_position()
-
-            while self.theia_1.current_node == self.forklift_1.current_node: #making sure they aren't overlapping to start
-                self.theia_1.randomize_position()
-
-            self.theia_1.randomize_goal()
-            while self.theia_1.goal_node == self.forklift_1.goal_node: #making sure that they aren't routing to the exact same node
-                self.theia_1.randomize_goal()
-            print("collision detected")
-            self.log_collision_to_file("results/tdsp1.txt")
-
         self.kit.update()
-        # self.draw.clear_points()
-        # self.draw.clear_lines()
-        
+
     
     
