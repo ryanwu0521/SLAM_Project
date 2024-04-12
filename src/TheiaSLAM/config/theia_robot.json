@@ -1,0 +1,14 @@
+{
+    "name":"theia_robot",
+    "usd_path":"omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/theia_robot/theia_robot.usd",
+    "prim_path":"/World/theia_robot",
+    "articulation_root":"/World/theia_robot/static/articulation_link",
+    "linear_speed":1,
+    "angular_speed":60,
+    "controller_type":"default",
+    "goal_color":[0,1,0,1],
+    "next_color":[0,1,0,0.5],
+    "height_offset": 0.25,
+    "wait_time":0
+
+}
