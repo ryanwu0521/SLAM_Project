@@ -1,3 +1,5 @@
+# draw all the EKF convariance and uncertainty ellipses
+
 import numpy as np
 
 from omni.isaac.dynamic_control import _dynamic_control as dc

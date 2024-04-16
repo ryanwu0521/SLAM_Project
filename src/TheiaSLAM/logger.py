@@ -1,4 +1,5 @@
-
+# log data to a file to feed into the EKF framework  (landmark positions, control inputs, etc.)
+# log EKF performance metrics
 
 class DataLog: 
     def __init__(self, file_path=None):

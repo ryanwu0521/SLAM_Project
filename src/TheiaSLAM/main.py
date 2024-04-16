@@ -1,3 +1,5 @@
+# calls the simlationhandler and run the program
+
 from omni.isaac.kit import SimulationApp
 
 # run with Isaac Sim visualization

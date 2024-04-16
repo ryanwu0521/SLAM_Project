@@ -1,3 +1,5 @@
+# Handles all the Isaac Sim related functionality
+
 import omni
 from omni.isaac.core.utils.nucleus import is_file
 from omni.isaac.core.objects import DynamicCuboid
