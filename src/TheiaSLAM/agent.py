@@ -164,6 +164,7 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         self.sync_to_world_time()
         self.update_position()
         self.sync_world_pose()
+        # self.ekf_SLAM()  #update @ 1hz
 
     def dijkstras(self):
         if self.current_node == None:

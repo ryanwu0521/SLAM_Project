@@ -58,20 +58,20 @@ class SLAMSimulationHandler:
         self.kit.update()
 
     #TODO: Break out to drawing utility class?
-    def draw_particles(self,time,color=np.array([1, 1, 0, .2])):
+    # def draw_particles(self,time,color=np.array([1, 1, 0, .2])):
         
-        for object in  self.theia_1.tracked_objects:
-            object.particle_filter.propogate_particles(time)
+    #     for object in  self.theia_1.tracked_objects:
+    #         object.particle_filter.propogate_particles(time)
 
-            for particle in object.particle_filter.particles:
-                self.draw.draw_points([particle.get_pose_at_time(time).get_position()],[color],[20])
+    #         for particle in object.particle_filter.particles:
+    #             self.draw.draw_points([particle.get_pose_at_time(time).get_position()],[color],[20])
 
-    def draw_cool_filter(self,t):
+    # def draw_cool_filter(self,t):
         
-        if self.theia_1.tracked_objects[0].particle_filter == None:
-            return
-        for i in range(t):
-            self.draw_particles(self.world.current_time + i,(1,(i)/t,0,.1))
+        # if self.theia_1.tracked_objects[0].particle_filter == None:
+        #     return
+        # for i in range(t):
+        #     self.draw_particles(self.world.current_time + i,(1,(i)/t,0,.1))
 
     def draw_update(self):
         #TODO: Consider compiling draw list first to limit calls
@@ -199,12 +199,19 @@ class SLAMSimulationHandler:
             self.kit.update()
         print("Loading Complete")        
 
-    def log_collision_to_file(self, filename):
-        t = time.localtime()
+    # def log_collision_to_file(self, filename):
+    #     t = time.localtime()
+    #     file = open(filename,"a")
+    #     write_string = str(self.world.current_time) + ", " + time.strftime("%H:%M:%S",t) + "\n"
+    #     file.write(write_string)
+    #     file.close
+
+    def log_landmark_and_control_to_file(self, landmark_positions, dx, dtheta, filename):
         file = open(filename,"a")
-        write_string = str(self.world.current_time) + ", " + time.strftime("%H:%M:%S",t) + "\n"
+
         file.write(write_string)
         file.close
+
 
     def spin_once(self):
 

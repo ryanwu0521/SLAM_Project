@@ -1,6 +1,9 @@
 from omni.isaac.kit import SimulationApp
 
+# run with Isaac Sim visualization
 # CONFIG = {"width": 1280, "height": 720, "sync_loads": True, "headless": False, "renderer": "RayTracedLighting"}
+
+# run without Isaac Sim visualization
 CONFIG = {"sync_loads": True, "headless": True}
 
 #TODO: Create config json
