@@ -12,8 +12,6 @@ import warnings
 
 class Agent():#Note, one day this probably should just be an inherited class from the omni.isaac.core robot class but I didn't do that because I'd have to learn more about that class
 
-    #Needs a behavior tree (new class)
-    #Needs to own the particle filter (new class)
     def __init__(self, fgraph:TraversalGraph, json_path:str, world):
         file = open(json_path)
         self.data = json.load(file)
@@ -164,7 +162,6 @@ class Agent():#Note, one day this probably should just be an inherited class fro
         self.sync_to_world_time()
         self.update_position()
         self.sync_world_pose()
-        # self.ekf_SLAM()  #update @ 1hz
 
     def dijkstras(self):
         if self.current_node == None:
