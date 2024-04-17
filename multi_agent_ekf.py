@@ -144,7 +144,7 @@ def warp2pi(angle_rad):
         angle_rad = -2 * np.pi + angle_rad
     return angle_rad
 
-def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
+def init_landmarks2(init_measure, init_measure_cov, init_pose, init_pose_cov):
     '''
     TODO: initialize landmarks given the initial poses and measurements with their covariances
     \param init_measure Initial measurements in the form of (beta0, l0, beta1, l1, ...).
@@ -181,8 +181,50 @@ def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
 
 
     return k, landmark, landmark_cov
+def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
+    '''
+    TODO: initialize landmarks given the initial poses and measurements with their covariances
+    \param init_measure Initial measurements in the form of (beta0, l0, beta1, l1, ...).
+    \param init_measure_cov Initial covariance matrix of shape (2, 2) per landmark given parameters.
+    \param init_pose Initial pose vector of shape (3, 1).
+    \param init_pose_cov Initial pose covariance of shape (3, 3) given parameters.
 
+    \return k Number of landmarks.
+    \return landmarks Numpy array of shape (2k, 1) for the state.
+    \return landmarks_cov Numpy array of shape (2k, 2k) for the uncertainty.
+    '''
+    # number of landmarks
+    k = init_measure.shape[0] // 2
+    # initial pose x y theta
+    x, y, theta = init_pose.ravel()
 
+    # initialize landmarks arrays and covariance
+    landmark = np.zeros((2 * k, 1))
+    landmark_cov = np.zeros((2 * k, 2 * k))
+
+    # loop calculation for landmark position and covariance
+    for i in range(k):
+        # measurements beta (bearing angle) and r (range)
+        beta = warp2pi(init_measure[2 * i, 0])
+        r = init_measure[2 * i + 1, 0]
+        
+        # calculate landmark position
+        lx = x + r * np.cos(theta + beta) 
+        ly = y + r * np.sin(theta + beta)
+        landmark[2 * i] = lx
+        landmark[2 * i + 1] = ly
+
+        # motion model with respect to the state
+        Lp = np.array([[-r * np.sin(theta + beta), np.cos(theta + beta)],
+                      [r * np.cos(theta + beta), np.sin(theta + beta)]])
+        # measurement model with respect to the state
+        Ll = np.array([[1, 0, -r * np.sin(theta + beta)],
+                       [0, 1, r * np.cos(theta + beta)]])
+    
+        # update landmark covariance
+        landmark_cov[2 * i:2 * i + 2, 2 * i:2 * i + 2] = Lp @ init_measure_cov @ Lp.T + Ll @ init_pose_cov @ Ll.T
+
+    return k, landmark, landmark_cov
 def predict(X, P, control, control_cov, k):
     '''
     TODO: predict step in EKF SLAM with derived Jacobians.
@@ -195,28 +237,93 @@ def predict(X, P, control, control_cov, k):
     \return X_pre Predicted X state of shape (3 + 2k, 1).
     \return P_pre Predicted P covariance of shape (3 + 2k, 3 + 2k).
     '''
-    X_pre = np.array(X)
-    #add controls to X
-    #use math.trig to ensure all results are float not array
-    dx = control[0] * math.cos(X[2])
-    dy = control[0] * math.sin(X[2])
-    dt = control[0]
-    dtheta = control[1]
-    X_pre[0:3] = [X[0] + dx, X[1] + dy, X[2] + dtheta]
+    # extract initial pose x, y, theta
+    x, y, theta = X[:3].ravel()
 
-    A_rot = np.asarray([[math.cos(X[2]), -math.sin(X[2]), 0],
-                   [math.sin(X[2]), math.cos(X[2]), 0],
-                   [0, 0, 1]])
-    A = np.zeros([3+2*k, 3+2*k])
-    A[0:3, 0:3] =  A_rot
-    control_cov_big = np.zeros([3+2*k, 3+2*k])
-    control_cov_big[0:3, 0:3] = control_cov
+    # extract control inputs delta and alpha
+    delta, alpha = control.ravel()
 
-    B = np.eye(3 + 2*k)
-    B[0,3] = -dt*math.sin(X[2])
-    B[1,3] = dt*math.cos(X[2])
+    # initialize state vector X and Convariance matrix P
+    X_pre = np.zeros((3 + 2 * k, 1))
+    P_pre = np.zeros((3 + 2 * k, 3 + 2 * k))
 
-    P_pre = A @ control_cov_big @ A.T + B @ P @ B.T
+    # predicted next pose
+    x_pre = x + delta * np.cos(theta)
+    y_pre = y + delta * np.sin(theta)
+    theta_pre = warp2pi(theta + alpha)
+
+    # Jacobian of the motion model
+    Gt = np.eye (3 + 2 * k)
+    Gt[:3, :3] = np.array([[1, 0, -delta * np.sin(theta)],
+                  [0, 1, delta * np.cos(theta)],
+                  [0, 0, 1]])
+
+    # Jacobian of the control model (rotaion matrix)
+    At = np.zeros((3 + 2 * k, 3 + 2 * k))
+    At[:3, :3] = np.array([[np.cos(theta), -np.sin(theta), 0],
+                  [np.sin(theta), np.cos(theta), 0],
+                  [0, 0, 1]])
+    
+    # predict state vector X
+    X_pre = np.vstack([x_pre, y_pre, theta_pre, X[3:]])
+    
+    # expand control_cov matrix to match size (15 by 15)
+    control_cov_expand = np.zeros((3 + 2 * k, 3 + 2 * k))
+    control_cov_expand[:3, :3] = control_cov
+
+    # predict covariance P
+    P_pre = Gt @ P @ Gt.T + At @ control_cov_expand @ At.T
+    
+    return X_pre, P_pre
+def predict2(X, P, control, control_cov, k):
+    '''
+    TODO: predict step in EKF SLAM with derived Jacobians.
+    \param X State vector of shape (3 + 2k, 1) stacking pose and landmarks.
+    \param P Covariance matrix of shape (3 + 2k, 3 + 2k) for X.
+    \param control Control signal of shape (2, 1) in the polar space that moves the robot.
+    \param control_cov Control covariance of shape (3, 3) in the (x, y, theta) space given the parameters.
+    \param k Number of landmarks.
+
+    \return X_pre Predicted X state of shape (3 + 2k, 1).
+    \return P_pre Predicted P covariance of shape (3 + 2k, 3 + 2k).
+    '''
+    # extract initial pose x, y, theta
+    x, y, theta = X[:3].ravel()
+
+    # extract control inputs delta and alpha
+    delta, alpha = control.ravel()
+
+    # initialize state vector X and Convariance matrix P
+    X_pre = np.zeros((3 + 2 * k, 1))
+    P_pre = np.zeros((3 + 2 * k, 3 + 2 * k))
+
+    # predicted next pose
+    x_pre = x + delta * np.cos(theta)
+    y_pre = y + delta * np.sin(theta)
+    theta_pre = warp2pi(theta + alpha)
+
+    # Jacobian of the motion model
+    Gt = np.eye (3 + 2 * k)
+    Gt[:3, :3] = np.array([[1, 0, -delta * np.sin(theta)],
+                  [0, 1, delta * np.cos(theta)],
+                  [0, 0, 1]])
+
+    # Jacobian of the control model (rotaion matrix)
+    At = np.zeros((3 + 2 * k, 3 + 2 * k))
+    At[:3, :3] = np.array([[np.cos(theta), -np.sin(theta), 0],
+                  [np.sin(theta), np.cos(theta), 0],
+                  [0, 0, 1]])
+    
+    # predict state vector X
+    X_pre = np.vstack([x_pre, y_pre, theta_pre, X[3:]])
+    
+    # expand control_cov matrix to match size (15 by 15)
+    control_cov_expand = np.zeros((3 + 2 * k, 3 + 2 * k))
+    control_cov_expand[:3, :3] = control_cov
+
+    # predict covariance P
+    P_pre = Gt @ P @ Gt.T + At @ control_cov_expand @ At.T
+    
     return X_pre, P_pre
 def update(X_pre, P_pre, measure, measure_cov, k):
     '''
@@ -400,7 +507,7 @@ def multi_main():
     sig_r2 = sig_r**2
 
     # Open data file and read the initial measurements
-    data_file = open("../data/data.txt")
+    data_file = open("data/data.txt")
     line = data_file.readline()
     fields = re.split('[\t ]', line)[:-1]
     arr = np.array([float(field) for field in fields])
@@ -420,8 +527,8 @@ def multi_main():
 
     
     # Initialize every agent
-    a0 = Agent("../data/data.txt", control_cov, measure_cov)
-    a1 = Agent("../data/data_bs.txt", control_cov, measure_cov)
+    a0 = Agent("data/data.txt", control_cov, measure_cov)
+    a1 = Agent("data/data_bs.txt", control_cov, measure_cov)
     agent_l.append(a0)
     agent_l.append(a1)
     global_last_X = a0.X
@@ -472,8 +579,8 @@ def main():
     sig_r2 = sig_r**2
 
     # Open data file and read the initial measurements
-    data_file = open("../data/data.txt")
-    lines = data_file.readlines()
+    data_file = open("data/data.txt")
+    line = data_file.readline()
     fields = re.split('[\t ]', line)[:-1]
     arr = np.array([float(field) for field in fields])
     measure = np.expand_dims(arr, axis=1)
