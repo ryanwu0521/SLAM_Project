@@ -445,25 +445,7 @@ class Agent():
         self.last_X = self.X
         self.X_pre = np.zeros([3+2*k, 1])
         self.P_pre = np.zeros([3+2 * k, 3 + 2 * k])
-
-        #[Isaac Sim]
-        file = open(json_path)
-        self.json = json.load(file)
-        self.world = world
-        self.current_node = None
-        self.current_edge = None
         
-        self.name = self.json["name"]
-        self.usd_path = self.json["usd_path"]
-        self.prim_path = self.json["prim_path"]
-        self.articulation_root = self.json["articulation_root"]
-        self.linear_speed = self.json["linear_speed"]
-        self.angular_speed = self.json["angular_speed"]
-        self.height_offset = self.json["height_offset"]
-
-        self.current_pose = Pose(np.array([0,0,0]), Rotation.from_euler('z',[0],True))
-        self.current_time = self.world.current_time
-
     #Use original predict and update functions
     # def predict():
     #     return;
@@ -500,19 +482,6 @@ class Agent():
         # self.X = X
         # self.P = P
     
-    # [Isaac Sim] sync agent's pose to world pose
-    def sync_to_world_time(self):
-        self.current_time = self.world.current_time
-
-    # [Isaac Sim] intialize agent's position
-    def set_init_position_to_pose(self, pose, oreintation):
-        self.init_pose = pose
-        # self.init_orientation = oreintation
-        self.current_pose.set_pose(pose, oreintation)
-        self.sync_world_pose()
-
-
-
     
 
 def multi_main():

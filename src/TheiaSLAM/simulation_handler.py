@@ -4,6 +4,10 @@ import omni
 
 from omni.isaac.core import World
 from omni.isaac.debug_draw import _debug_draw
+from omni.isaac.dynamic_control import _dynamic_control as dc
+from omni.isaac.core.prims import XFormPrim
+import omni.isaac.core.utils.stage as stage_utils
+
 
 import numpy as np
 import carb 
@@ -38,25 +42,9 @@ class SLAMSimulationHandler:
 
         omni.timeline.get_timeline_interface().play()
 
-        self.sig_x = 0.25
-        self.sig_y = 0.1
-        self.sig_alpha = 0.1
-        self.sig_beta = 0.01
-        self.sig_r = 0.08
-
-        self.sig_x2 = self.sig_x**2
-        self.sig_y2 = self.sig_y**2
-        self.sig_alpha2 = self.sig_alpha**2
-        self.sig_beta2 = self.sig_beta**2
-        self.sig_r2 = self.sig_r**2
-        
-        self.control_cov = np.diag([self.sig_x2, self.sig_y2, self.sig_alpha2])
-        self.measure_cov = np.diag([self.sig_beta2, self.sig_r2])
-
-
-        self.slam_agent_theia = multi_agent_ekf.Agent("src/TheiaSLAM/data/data.txt", self.control_cov, self.measure_cov, "src/TheiaSLAM/config/theia_robot.json", self.world) 
-
-        self.slam_agent.set_init_position_to_pose([0,0,0],[0,0,0,1])
+        # load the agent into the world  
+        self.load_Theia_usd(position = [0,0,0])
+        self.slam_agent = None  
 
         # self.slam_agent.randomize_position()
         # self.slam_agent.randomize_goal()
@@ -64,37 +52,41 @@ class SLAMSimulationHandler:
         self.kit.update()
         self.kit.update()
         self.kit.update()
-     
 
-    def draw_update(self):
-        self.draw_graph()
-        self.draw_path()
-        self.draw_goal()
-    
-    def draw_graph(self):
-        for node in  self.graph.nodes:
-            self.draw.draw_points([np.array(node.get_position())],[np.array(node.draw_color)],[node.draw_size])
-        for edge in  self.graph.edges:
-            self.draw.draw_lines([np.array(edge.node1.get_position())],[np.array(edge.node2.get_position())],[np.array(edge.draw_color)],[edge.draw_size])
-
-    def draw_goal(self):
-        if self.slam_agent.current_node == None or self.slam_agent.next_node == None or self.slam_agent.goal_node == None:
-            return
-        dot_color = (0, 1, 0, .5)
-        dot_size  = (20)
-        self.draw.draw_points([self.slam_agent.goal_node.get_position()],[dot_color],[dot_size])
-
-    def draw_path(self):
-        dot_color = (0, 1, 0, .5)
-        if self.slam_agent.current_node == None or self.slam_agent.next_node == None or self.slam_agent.goal_node == None:
-            return
+    def load_Theia_usd(self, position):
+        # define the path to the robot
+        name = "Theia"
+        usd_path = "omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/theia_robot/theia_robot.usd"
+        prim_path = "/World/theia_robot"
+        robot_scale = np.array([5, 5, 5])
+        height_offset = 0.25
+        articulation_root = "/World/theia_robot/static/articulation_link"
         
-        self.draw.draw_lines([self.slam_agent.current_pose.get_position()],[self.slam_agent.next_node.get_position()],[dot_color],[5])
-        prev_position = self.slam_agent.next_node.get_position()
-        for node in self.slam_agent.global_plan:
-            self.draw.draw_lines([node.get_position()],[prev_position],[dot_color],[5])
-            prev_position = node.get_position()
+        # add the robot to the world
+        stage_utils.add_reference_to_stage(usd_path, prim_path)
+        # stage_utils.add_reference_to_stage(usd_path, prim_path, scale=robot_scale, position_offset=[0, 0, height_offset])
 
+        prim = XFormPrim(articulation_root, name= name, position=position, orientation=[0, 0, 0, 1])
+
+        # add the agent to the world
+        # self.slam_agent = multi_agent_ekf.Agent(self.world, prim, articulation_root, self.landmarks)
+
+    # def move_robot(self, dx, dtheta):
+    #     # get the current pose of the robot
+    #     current_pose = self.slam_agent.current_pose
+    #     current_position = current_pose.get_position()
+    #     current_heading = current_pose.get_heading()
+
+    #     if self.slam_agent is not None:
+    #         # update the position of the robot
+    #         new_position = current_position + np.array([dx, 0, 0])
+    #         new_heading = current_heading + dtheta
+
+    #         # set the new position of the robot
+    #         self.slam_agent.set_position(new_position, new_heading)
+    #     else:
+    #         print("SLAM agent not initialized. Cannot move robot.")
+        
     def spin(self) -> None:
         # self.world.pause()
         while self.kit.is_running():
@@ -112,7 +104,7 @@ class SLAMSimulationHandler:
 
     def spin_once(self):
 
-        # self.slam_agent.spin_once()
+        # self.move_robot(dx=3, dtheta=0.5)
         self.kit.update()
 
     
