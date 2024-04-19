@@ -14,6 +14,7 @@ import carb
 
 import cTheiaSLAM as c 
 from map_generator import MapGenerator
+from cTheiaSLAM import *
 
 import agent
 import time 
@@ -42,34 +43,56 @@ class SLAMSimulationHandler:
 
         omni.timeline.get_timeline_interface().play()
 
-        # load the agent into the world  
-        self.load_Theia_usd(position = [0,0,0])
-        self.slam_agent = None  
-
-        # self.slam_agent.randomize_position()
-        # self.slam_agent.randomize_goal()
+        # load the agents into the world  
+        self.load_Theia_usd()
+        self.load_forklift_usd()
+         
+        # self.prim = XFormPrim()
 
         self.kit.update()
         self.kit.update()
         self.kit.update()
 
-    def load_Theia_usd(self, position):
+    def sync_world_pose(self):
+        self.prim.set_world_pose(position = self.current_pose.get_position(), orientation=self.current_pose.get_quat_scalar_first())
+
+    def load_Theia_usd(self):
         # define the path to the robot
         name = "Theia"
         usd_path = "omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/theia_robot/theia_robot.usd"
         prim_path = "/World/theia_robot"
-        robot_scale = np.array([5, 5, 5])
         height_offset = 0.25
+        position = [0, 0, height_offset]
+        # translation = [0, 0, 0]
         articulation_root = "/World/theia_robot/static/articulation_link"
         
         # add the robot to the world
         stage_utils.add_reference_to_stage(usd_path, prim_path)
-        # stage_utils.add_reference_to_stage(usd_path, prim_path, scale=robot_scale, position_offset=[0, 0, height_offset])
 
-        prim = XFormPrim(articulation_root, name= name, position=position, orientation=[0, 0, 0, 1])
+        # create the robot prim
+        prim = XFormPrim(articulation_root, name = name, position = position)
+        
 
-        # add the agent to the world
-        # self.slam_agent = multi_agent_ekf.Agent(self.world, prim, articulation_root, self.landmarks)
+        return prim
+    
+        
+    def load_forklift_usd(self):
+         # define the path to the robot
+        name = "Forklift"
+        usd_path = "omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/forklift/forklift.usd"
+        prim_path = "/World/forklift"
+        height_offset = 0.25
+        position = [15, 15, height_offset]
+        # translation = [0, 0, 0]
+        articulation_root = "/World/forklift"
+        
+        # add the robot to the world
+        stage_utils.add_reference_to_stage(usd_path, prim_path)
+
+        # create the robot prim
+        prim = XFormPrim(articulation_root, name = name, position = position, orientation = [0, 0, 0, 1])
+        
+        return prim
 
     # def move_robot(self, dx, dtheta):
     #     # get the current pose of the robot
@@ -86,7 +109,7 @@ class SLAMSimulationHandler:
     #         self.slam_agent.set_position(new_position, new_heading)
     #     else:
     #         print("SLAM agent not initialized. Cannot move robot.")
-        
+
     def spin(self) -> None:
         # self.world.pause()
         while self.kit.is_running():
