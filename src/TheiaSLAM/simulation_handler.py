@@ -21,6 +21,10 @@ import time
 
 import multi_agent_ekf
 
+class CustomXFormPrim(XFormPrim):
+    def set_position(self, position):
+        self.position = position
+
 class SLAMSimulationHandler:
 
     def __init__(self, kit) -> None:
@@ -36,7 +40,7 @@ class SLAMSimulationHandler:
         self.landmarks = self.map_generator.landmarks
         # self.graph = self.map_generator.graph
 
-        # set sim's physics context
+        # set up physics context
         self.physx = self.world.get_physics_context()
         self.physx.set_gravity(0.0)
         self.world.initialize_physics()
@@ -44,35 +48,32 @@ class SLAMSimulationHandler:
         omni.timeline.get_timeline_interface().play()
 
         # load the agents into the world  
-        self.load_Theia_usd()
-        self.load_forklift_usd()
-         
-        # self.prim = XFormPrim()
+        self.theia_prim = self.load_theia_usd()
+        self.forklift_prim = self.load_forklift_usd()
 
+        # update the simulation to apply changes
         self.kit.update()
         self.kit.update()
         self.kit.update()
 
-    def sync_world_pose(self):
-        self.prim.set_world_pose(position = self.current_pose.get_position(), orientation=self.current_pose.get_quat_scalar_first())
+    def sync_world_position(self, prim, position, orientation):
+        prim.set_world_pose(position = position, orientation = orientation)
 
-    def load_Theia_usd(self):
+    def load_theia_usd(self):
         # define the path to the robot
         name = "Theia"
         usd_path = "omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/theia_robot/theia_robot.usd"
         prim_path = "/World/theia_robot"
         height_offset = 0.25
         position = [0, 0, height_offset]
-        # translation = [0, 0, 0]
         articulation_root = "/World/theia_robot/static/articulation_link"
         
         # add the robot to the world
         stage_utils.add_reference_to_stage(usd_path, prim_path)
 
         # create the robot prim
-        prim = XFormPrim(articulation_root, name = name, position = position)
+        prim = CustomXFormPrim(articulation_root, name = name, position = position)
         
-
         return prim
     
         
@@ -82,53 +83,63 @@ class SLAMSimulationHandler:
         usd_path = "omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/forklift/forklift.usd"
         prim_path = "/World/forklift"
         height_offset = 0.25
-        position = [15, 15, height_offset]
-        # translation = [0, 0, 0]
+        position = [10, 0, height_offset]
         articulation_root = "/World/forklift"
         
         # add the robot to the world
         stage_utils.add_reference_to_stage(usd_path, prim_path)
 
         # create the robot prim
-        prim = XFormPrim(articulation_root, name = name, position = position, orientation = [0, 0, 0, 1])
+        prim = CustomXFormPrim(articulation_root, name = name, position = position, orientation = [0, 0, 0, 1])
         
         return prim
+    
+    def move_agent(self, theia_new_position, forklift_new_position):
+        print ("Moving Theia to: ", theia_new_position)
+        print ("Moving Forklift to: ", forklift_new_position)
 
-    # def move_robot(self, dx, dtheta):
-    #     # get the current pose of the robot
-    #     current_pose = self.slam_agent.current_pose
-    #     current_position = current_pose.get_position()
-    #     current_heading = current_pose.get_heading()
+        if hasattr(self, 'theia_prim') and hasattr(self, 'forklift_prim'):
+            # move theia
+            self.sync_world_position(self.theia_prim, theia_new_position, [0, 0, 0, 1])
+           
+            # move forklift
+            self.sync_world_position(self.forklift_prim, forklift_new_position, [0, 0, 0, 1])
 
-    #     if self.slam_agent is not None:
-    #         # update the position of the robot
-    #         new_position = current_position + np.array([dx, 0, 0])
-    #         new_heading = current_heading + dtheta
+            # update the simulation to apply changes
+            self.kit.update()
+        else: 
+            print("Theia and Forklift Prims not found")
 
-    #         # set the new position of the robot
-    #         self.slam_agent.set_position(new_position, new_heading)
-    #     else:
-    #         print("SLAM agent not initialized. Cannot move robot.")
-
-    def spin(self) -> None:
-        # self.world.pause()
+    def run(self) -> None:
+        # main loop to run the simulation
         while self.kit.is_running():
-            self.spin_once()
+            self.run_simulation()
 
         omni.timeline.get_timeline_interface().stop()
         self.kit.close()
 
-    def log_collision_to_file(self, filename):
-        t = time.localtime()
-        file = open(filename,"a")
-        write_string = str(self.world.current_time) + ", " + time.strftime("%H:%M:%S",t) + "\n"
-        file.write(write_string)
-        file.close
+    # def log_bearing_range_data(self, theia_current_position, forklift_current_position,filename):
+    #     landmark_positions = self.map_generator.landmark_positions
 
-    def spin_once(self):
+    #     file = open(filename,"a")
+        
+    #     for landmark_position in landmark_positions:
+    #         # calculate the bearing and range
+    #         bearing = np.arctan2(landmark_position[1] - theia_current_position[1], landmark_position[0] - theia_current_position[0])
+    #         range = np.sqrt((landmark_position[1] - theia_current_position[1])**2 + (landmark_position[0] - theia_current_position[0])**2)
 
-        # self.move_robot(dx=3, dtheta=0.5)
+    #         # write the bearing and range to the file
+    #         file.write(str(bearing) + "," + str(range) + "\n")
+
+    #     file.close
+
+    def run_simulation(self):
+        # run a sinle step of the simulation
+        theia_new_position = [10, 0, 0.25]
+        forklift_new_position = [0, 0, 0.25]
+        # print("Moving Theia to: " + str(theia_new_position))
+        # print("Moving Forklift to: " + str(forklift_new_position))
+        self.move_agent(theia_new_position, forklift_new_position)
+        # print("Simulation running...")
         self.kit.update()
-
-    
-    
+        # print("Simulation updated")
