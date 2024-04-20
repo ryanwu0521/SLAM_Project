@@ -333,6 +333,28 @@ def evaluate(X, P, k):
         print("mahalanobis error is", mahalanobis[-1])
         continue
 
+def aggregate_covariance_matrices(agent_list):
+    all_information_matrices = [np.linalg.inv(agent.P) for agent in agent_list]
+    global_information_matrix = np.sum(all_information_matrices, axis=0)
+    global_covariance = np.linalg.inv(global_information_matrix)
+    return global_covariance
+
+
+def analyze_global_covariance(global_covariance):
+    # Analyze the global covariance matrix
+    trace = np.trace(global_covariance)
+    eigenvalues, _ = np.linalg.eig(global_covariance)
+    # Perform further analysis as needed
+    return trace, eigenvalues
+
+
+def print_agent_variances(agent_list):
+    for i, agent in enumerate(agent_list):
+        variance = np.trace(agent.P)
+        print(f"Agent {i} variance (trace of covariance matrix): {variance}")
+        variance = np.linalg.det(agent.P)
+        print(f"Agent {i} variance (determinant of covariance matrix): {variance}")
+
 class Agent():
     def __init__(self, file_name, control_cov, measure_cov):
         #initialize for every agent base on first measurements
@@ -392,7 +414,6 @@ class Agent():
         # self.X = X
         # self.P = P
         
-
 
     
 
@@ -464,6 +485,19 @@ def multi_main():
         global_P = global_P / len(agent_l)
         G_draw_traj_and_map(global_X, global_last_X, global_P, agent_l[0].t) 
         global_last_X = global_X
+    
+    print_agent_variances(agent_l)
+
+    global_covariance = aggregate_covariance_matrices(agent_l)
+    trace, eigenvalues = analyze_global_covariance(global_covariance)
+    global_det = np.linalg.det(global_covariance)
+    
+
+    print("global variance (trace of covariance matrix):", trace)
+    print("Global variance (determinant of covariance matrix): ",global_det)
+    #print("Eigenvalues of global covariance:", eigenvalues)
+
+
     print("\n Evalutating Agent 0")
     evaluate(a0.X, a0.P, a0.k)
     print("\n Evalutating Agent 1")
