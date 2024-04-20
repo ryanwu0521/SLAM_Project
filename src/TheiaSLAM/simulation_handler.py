@@ -76,29 +76,7 @@ class SLAMSimulationHandler:
 
     def sync_world_position(self, prim, position):
         prim.set_world_pose(position = position)
-
-
-    # def generate_local_trajectory(self, agent_position, agent):
-    #     # calculate the local trajectory for the agent
-    #     if agent == "theia":
-    #         current_waypoint = self.theia_waypoints[self.theia_current_waypoint_index]
-    #     elif agent == "forklift":
-    #         current_waypoint = self.forklift_waypoints[self.forklift_current_waypoint_index]
-   
-    #     dx = current_waypoint[0] - agent_position[0]
-    #     dy = current_waypoint[1] - agent_position[1]
-
-    #     # calculate the angle to the next waypoint
-    #     angle_to_waypoint = np.arctan2(dy, dx)
-
-    #     # calculate the distance to the next waypoint
-    #     distance_to_waypoint = np.sqrt(dx**2 + dy**2)
-
-    #     # calculate the local trajectory
-    #     # local_trajectory = [[distance_to_waypoint, angle_to_waypoint]]
-
-    #     return distance_to_waypoint, angle_to_waypoint
-        
+ 
 
     def load_theia_usd(self):
         # define the path to the robot
