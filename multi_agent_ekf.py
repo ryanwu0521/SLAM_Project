@@ -144,43 +144,6 @@ def warp2pi(angle_rad):
         angle_rad = -2 * np.pi + angle_rad
     return angle_rad
 
-def init_landmarks2(init_measure, init_measure_cov, init_pose, init_pose_cov):
-    '''
-    TODO: initialize landmarks given the initial poses and measurements with their covariances
-    \param init_measure Initial measurements in the form of (beta0, l0, beta1, l1, ...).
-    \param init_measure_cov Initial covariance matrix of shape (2, 2) per landmark given parameters.
-    \param init_pose Initial pose vector of shape (3, 1).
-    \param init_pose_cov Initial pose covariance of shape (3, 3) given parameters.
-
-    \return k Number of landmarks.
-    \return landmarks Numpy array of shape (2k, 1) for the state.
-    \return landmarks_cov Numpy array of shape (2k, 2k) for the uncertainty.
-    '''
-
-    k = init_measure.shape[0] // 2
-
-    landmark = np.zeros((2 * k, 1))
-    landmark_cov = np.zeros((2 * k, 2 * k))
-
-    init_pose = init_pose.reshape(-1) #change from (3,1) to (3,)
-    init_measure = init_measure.reshape(-1)
-    bot_x = init_pose[0]
-    bot_y = init_pose[1]
-    bot_theta = init_pose[2]
-    for i in range(k):
-        beta = init_measure[i*2]
-        l = init_measure[i*2 + 1]
-        x = bot_x + np.cos(bot_theta + beta) * l
-        y = bot_y + np.sin(bot_theta + beta) * l
-        
-        landmark[i * 2] = x
-        landmark[i*2 + 1] = y
-
-        trans = np.asarray([[-1 *l * np.sin(bot_theta + beta), np.cos(bot_theta + beta)], [l * np.cos(bot_theta + beta), np.sin(bot_theta + beta)]])
-        landmark_cov[i*2:i*2+2, i*2:i*2+2] = trans @ init_measure_cov @ trans.T + np.diag(init_pose_cov[0:2])
-
-
-    return k, landmark, landmark_cov
 def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
     '''
     TODO: initialize landmarks given the initial poses and measurements with their covariances
@@ -275,56 +238,7 @@ def predict(X, P, control, control_cov, k):
     P_pre = Gt @ P @ Gt.T + At @ control_cov_expand @ At.T
     
     return X_pre, P_pre
-def predict2(X, P, control, control_cov, k):
-    '''
-    TODO: predict step in EKF SLAM with derived Jacobians.
-    \param X State vector of shape (3 + 2k, 1) stacking pose and landmarks.
-    \param P Covariance matrix of shape (3 + 2k, 3 + 2k) for X.
-    \param control Control signal of shape (2, 1) in the polar space that moves the robot.
-    \param control_cov Control covariance of shape (3, 3) in the (x, y, theta) space given the parameters.
-    \param k Number of landmarks.
 
-    \return X_pre Predicted X state of shape (3 + 2k, 1).
-    \return P_pre Predicted P covariance of shape (3 + 2k, 3 + 2k).
-    '''
-    # extract initial pose x, y, theta
-    x, y, theta = X[:3].ravel()
-
-    # extract control inputs delta and alpha
-    delta, alpha = control.ravel()
-
-    # initialize state vector X and Convariance matrix P
-    X_pre = np.zeros((3 + 2 * k, 1))
-    P_pre = np.zeros((3 + 2 * k, 3 + 2 * k))
-
-    # predicted next pose
-    x_pre = x + delta * np.cos(theta)
-    y_pre = y + delta * np.sin(theta)
-    theta_pre = warp2pi(theta + alpha)
-
-    # Jacobian of the motion model
-    Gt = np.eye (3 + 2 * k)
-    Gt[:3, :3] = np.array([[1, 0, -delta * np.sin(theta)],
-                  [0, 1, delta * np.cos(theta)],
-                  [0, 0, 1]])
-
-    # Jacobian of the control model (rotaion matrix)
-    At = np.zeros((3 + 2 * k, 3 + 2 * k))
-    At[:3, :3] = np.array([[np.cos(theta), -np.sin(theta), 0],
-                  [np.sin(theta), np.cos(theta), 0],
-                  [0, 0, 1]])
-    
-    # predict state vector X
-    X_pre = np.vstack([x_pre, y_pre, theta_pre, X[3:]])
-    
-    # expand control_cov matrix to match size (15 by 15)
-    control_cov_expand = np.zeros((3 + 2 * k, 3 + 2 * k))
-    control_cov_expand[:3, :3] = control_cov
-
-    # predict covariance P
-    P_pre = Gt @ P @ Gt.T + At @ control_cov_expand @ At.T
-    
-    return X_pre, P_pre
 def update(X_pre, P_pre, measure, measure_cov, k):
     '''
     TODO: update step in EKF SLAM with derived Jacobians.
@@ -527,28 +441,35 @@ def multi_main():
 
     
     # Initialize every agent
-    a0 = Agent("data/data.txt", control_cov, measure_cov)
-    a1 = Agent("data/data_bs.txt", control_cov, measure_cov)
+    a0 = Agent("gen_data1.txt", control_cov, measure_cov)
+    a1 = Agent("gen_data2.txt", control_cov, measure_cov)
+    a2 = Agent("gen_datab1.txt", control_cov, measure_cov)
     agent_l.append(a0)
     agent_l.append(a1)
+    agent_l.append(a2)
     global_last_X = a0.X
     # In for loop, call predict and update for every agent5
     for i in range(1,len(data_file.readlines())):
-        for agent in agent_l:
+        counter = 0
+        for agent in agent_l:#step each agent
+            print(counter)
+            counter += 1
             agent.step(i)
         global_X = np.zeros_like(agent_l[0].X)
         global_P = np.zeros_like(agent_l[0].P)
-        for agent in agent_l:
+        for agent in agent_l:#take simple average as global estimation
             global_X += agent.X
             global_P += agent.P
         global_X = global_X / len(agent_l)
         global_P = global_P / len(agent_l)
-        G_draw_traj_and_map(global_X, global_last_X, global_P, agent_l[0].t)
+        G_draw_traj_and_map(global_X, global_last_X, global_P, agent_l[0].t) 
         global_last_X = global_X
     print("\n Evalutating Agent 0")
     evaluate(a0.X, a0.P, a0.k)
     print("\n Evalutating Agent 1")
     evaluate(a1.X, a1.P, a1.k)
+    print("\n Evalutating Agent 2")
+    evaluate(a2.X, a2.P, a2.k)
     print("\n Evalutating Global")   
     evaluate(global_X, global_P, a0.k)       
 
