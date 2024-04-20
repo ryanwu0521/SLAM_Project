@@ -13,6 +13,7 @@ import omni.isaac.core.utils.stage as stage_utils
 import numpy as np
 import time
 import carb 
+import re
 
 import cTheiaSLAM as c 
 from map_generator import MapGenerator
@@ -74,8 +75,8 @@ class SLAMSimulationHandler:
         self.kit.update()
 
 
-    def sync_world_position(self, prim, position):
-        prim.set_world_pose(position = position)
+    def sync_world_position(self, prim, position, orientation):
+        prim.set_world_pose(position = position, orientation = orientation)
  
 
     def load_theia_usd(self):
@@ -121,56 +122,72 @@ class SLAMSimulationHandler:
         forklift_prim = CustomXFormPrim(articulation_root, name = name, position = forklift_pose.get_position(), orientation = forklift_pose.get_quat_scalar_first())
 
         return forklift_prim
+    
+
+    def read_data_from_file(self, file_path):
+        # initialize the measurement and control input lists
+        bearing_values = []
+        range_values = []
+        dx_values = []
+        dtheta_values = []  # radians 
+
+        # read the measurement and control inputs from the file
+        with open(file_path, 'r') as file:    
+            lines = file.readlines()
+
+            # loop for bearing and range values
+            for i in range(0, len(lines), 2):
+                fields = re.split('[\t ]', lines[i])[:-1]
+                bearing = float(fields[0])
+                r = float(fields[1])
+
+                bearing_values.append(bearing)
+                range_values.append(r)
+
+            # loop for dx and dtheta values
+            for i in range(1, len(lines), 2):
+                fields = re.split('[\t ]', lines[i])[:-1]
+                dx = float(fields[0])
+                dtheta = float(fields[1])
+
+                dx_values.append(dx)
+                dtheta_values.append(dtheta)  
+
+        return bearing_values, range_values, dx_values, dtheta_values
 
 
-    def move_agent_controls(self, theia_dx, theia_dy):
+    def move_agent_controls(self, theia_dx, theia_dtheta):
         if hasattr(self, 'theia_prim'):
             # move theia
             theia_position = self.theia_prim.get_position()
-            theia_orientation = self.theia_prim.get_orientation()
+            theia_orentation = self.theia_prim.get_orientation()
 
             # calculate the new position
-            new_theia_position = [theia_position[0] + theia_dx, theia_position[1] + theia_dy, theia_position[2]]
-            
-            # update the theia prim position
+            orientation_quat = Rotation.from_quat(theia_orentation)
+            orientation_matrix = orientation_quat.as_matrix()
+            forward_direction = np.dot(orientation_matrix, np.array([1, 0, 0]))
+            new_theia_position = [theia_position[0] + theia_dx * forward_direction[0], theia_position[1] + theia_dx * forward_direction[1], theia_position[2]]
+
+            # calculate the new orientation
+            current_theia_orientation = orientation_quat.as_euler('xyz', degrees = False)
+            current_theia_orientation[0] += theia_dtheta
+            new_theia_orientation = Rotation.from_euler('xyz', current_theia_orientation, degrees = False).as_quat()
+
+            # update the theia prim position and orientation
             self.theia_prim.set_position(new_theia_position)
+            self.theia_prim.set_orientation(new_theia_orientation)
 
             # update the theia world position
-            self.sync_world_position(self.theia_prim, new_theia_position)
+            self.sync_world_position(self.theia_prim, new_theia_position, new_theia_orientation)
 
             # generate the local trajectory
-            self.generate_local_trajectory(new_theia_position)
+            # self.generate_local_trajectory(new_theia_position)
             
             # update the simulation to apply changes
             self.kit.update()
         else:
             print("Theia and Forklift Prims not found")
 
-    
-    # def log_bearing_range_data(self, theia_current_position, forklift_current_position,filename):
-    #     landmark_positions = self.map_generator.landmark_positions
-
-    #     file = open(filename,"a")
-        
-    #     for landmark_position in landmark_positions:
-    #         # calculate the bearing and range
-    #         bearing = np.arctan2(landmark_position[1] - theia_current_position[1], landmark_position[0] - theia_current_position[0])
-    #         range = np.sqrt((landmark_position[1] - theia_current_position[1])**2 + (landmark_position[0] - theia_current_position[0])**2)
-
-    #         # write the bearing and range to the file
-    #         file.write(str(bearing) + "," + str(range) + "\n")
-
-    #     file.close
-
-
-    def visualize_ekf_estimated_landmarks(self, estimated_landmarks):
-        # visualize the estimated landmarks
-        for landmark in estimated_landmarks:
-            # draw the estimated landmark
-            self.draw.add_cuboid(landmark, [0.1, 0.1, 0.1], [1, 0, 0, 1], 1.0, 0.0)
-        
-        # update the simulation to apply changes
-        self.kit.update()
 
     def generate_local_trajectory(self, new_position):
         # calculate the local trajectory for the agent
@@ -204,68 +221,52 @@ class SLAMSimulationHandler:
         # Return the calculated trajectory
         return distance_to_waypoint, angle_to_waypoint, angular_speed_to_waypoint
 
-    # moves the agent in the shape of the pentagon but can't take data measurements
-    # def run_simulation(self):
-    #     # run a sinle step of the simulation
-    #     # print("Moving Theia to: " + str(theia_new_position))
-    #     # print("Moving Forklift to: " + str(forklift_new_position))
 
-    #     distance = 16
-    #     angle = np.pi * 2/5
-
-    #     theia_control_inputs = []
-    #     for _ in range(5):
-    #         theia_control_inputs.append([distance * np.cos(angle), distance * np.sin(angle)])
-    #         angle += np.pi * 2 / 5  # Move to the next vertex
-
-    #     for theia_dx, theia_dy in theia_control_inputs:
-    #         print('Moving Theia with control inputs:', theia_dx, theia_dy)
-    #         self.move_agent_controls(theia_dx, theia_dy)
-    #         print("Theia's position:", self.theia_prim.get_position())
-    #         time.sleep(1)
-
-    #     self.kit.update()
-
+    def visualize_ekf_estimated_landmarks(self, estimated_landmarks):
+            # visualize the estimated landmarks
+            for landmark in estimated_landmarks:
+                # draw the estimated landmark
+                self.draw.add_cuboid(landmark, [0.1, 0.1, 0.1], [1, 0, 0, 1], 1.0, 0.0)
+            
+            # update the simulation to apply changes
+            self.kit.update()
     
+
     def run_simulation(self):
-        # control inputs for the theia agent
-        distance_long = 3
-        distance_short = 1
-        dtheta = 1.2566  # radians
-
-        # Calculate x y components of the control inputs
-        dx1 = distance_long
-        dy1 = 0
-        dx2 = distance_short * np.cos(dtheta)
-        dy2 = distance_short * np.sin(dtheta)
-        dx3 = distance_long * np.sin(dtheta)
-        dy3 = distance_long * np.cos(dtheta)
-        dx4 = distance_short
-        dy4 = 0
-        dx5 = distance_long * np.sin(2 * dtheta)
-        dy5 = -distance_long * np.cos(2 * dtheta)
-
-        # Create the control inputs for the pentagon
-        theia_control_inputs = [
-            [dx1, dy1],  # Move straight
-            [dx2, dy2],  # Turn
-            [dx3, dy3],  # Move straight
-            [dx4, dy4],  # Turn
-            [dx5, dy5],  # Move straight
-        ]
+        # data inputs for the theia agent
+        bearing_values, range_values, dx_values, dtheta_values = self.read_data_from_file('src\TheiaSLAM\data\data.txt')
         
-        for i, (theia_dx, theia_dy) in enumerate(theia_control_inputs):
-            print('Moving Theia with control inputs: ', theia_dx, theia_dy)
-            self.move_agent_controls(theia_dx, theia_dy)
+        # print the control inputs
+        # print('bearing values:', bearing_values)
+        # print('range values:', range_values)
+        print('dx values:', dx_values)
+        print('dtheta values:', dtheta_values)
+
+        # create the control inputs for the pentagon trajectory
+        theia_control_inputs = zip (dx_values, dtheta_values)
+
+        # flag to check if there are more control inputs
+        has_more_control_inputs = True
+        
+        for i, (theia_dx, theia_dtheta) in enumerate(theia_control_inputs):
+            print('Moving Theia with control inputs: ', theia_dx, theia_dtheta)
+            
+            # move the theia agent
+            self.move_agent_controls(theia_dx, theia_dtheta)
+
+            # print the theia agent's position and orientation after moving
             print("Theia's position:", self.theia_prim.get_position())
+            print("Theia's orientation:", self.theia_prim.get_orientation())
+            
             time.sleep(1)
 
-            # check if the theia agent has reached the end of control inputs
-            # if i == len(theia_control_inputs) - 1:
-            #     print ("Theia has reached the end of the control inputs")
-            #     break
-        else:
-            print("Theia has not reached the end of the control inputs")
+            # check if there are more control inputs
+            if i == len(dx_values) - 1:
+                has_more_control_inputs = False
+                break
+
+        if not has_more_control_inputs:
+            print("Theia has reached the end of the control inputs")
             
             
         self.kit.update()
