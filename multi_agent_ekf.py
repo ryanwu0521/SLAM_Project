@@ -477,7 +477,7 @@ def multi_main():
     sig_r2 = sig_r**2
 
     # Open data file and read the initial measurements
-    data_file = open("data/data.txt")
+    data_file = open("data\data.txt")
     line = data_file.readline()
     fields = re.split('[\t ]', line)[:-1]
     arr = np.array([float(field) for field in fields])
@@ -499,9 +499,9 @@ def multi_main():
 
     
     # Initialize every agent
-    a0 = Agent("dataP0R5B4.txt", control_cov, measure_cov0)
-    a1 = Agent("dataP1R4B3.txt", control_cov, measure_cov1)
-    a2 = Agent("dataP2R3B2.txt", control_cov, measure_cov2)
+    a0 = Agent("data\dataP0R5B4.txt", control_cov, measure_cov0)
+    a1 = Agent("data\dataP1R4B3.txt", control_cov, measure_cov1)
+    a2 = Agent("data\dataP2R3B2.txt", control_cov, measure_cov2)
     agent_l.append(a0)
     agent_l.append(a1)
     agent_l.append(a2)
@@ -583,7 +583,7 @@ def main():
     sig_r2 = sig_r**2
 
     # Open data file and read the initial measurements
-    data_file = open("data/data.txt")
+    data_file = open("data\data.txt")
     line = data_file.readline()
     fields = re.split('[\t ]', line)[:-1]
     arr = np.array([float(field) for field in fields])

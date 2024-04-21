@@ -6,13 +6,10 @@ from omni.isaac.core import World
 from omni.isaac.debug_draw import _debug_draw
 from omni.isaac.dynamic_control import _dynamic_control as dc
 from omni.isaac.core.prims import XFormPrim
-# from omni.isaac.core import omni_math
 import omni.isaac.core.utils.stage as stage_utils
 
 
 import numpy as np
-import time
-import carb 
 import re
 import math
 from math import radians, sin, cos
@@ -21,8 +18,6 @@ import cTheiaSLAM as c
 from map_generator import MapGenerator
 from cTheiaSLAM import *
 
-import agent
-import multi_agent_ekf
  
 
 class CustomXFormPrim(XFormPrim):
@@ -309,21 +304,24 @@ class SLAMSimulationHandler:
         return distance_to_waypoint, angle_to_waypoint, time_to_waypoint
 
 
-    def visualize_ekf_estimated_landmarks(self, estimated_landmarks):
-            # visualize the estimated landmarks
-            for landmark in estimated_landmarks:
-                # draw the estimated landmark
-                self.draw.add_cuboid(landmark, [0.1, 0.1, 0.1], [1, 0, 0, 1], 1.0, 0.0)
-            
-            # update the simulation to apply changes
-            self.kit.update()
-    
+    # def visualize_ekf_estimated_landmarks(self, estimated_landmarks):
+    #         draw = _debug_draw.acquire_debug_draw_interface()
+    #         # visualize the estimated landmarks
+    #         for x, y in estimated_landmarks:
+    #             position = Vector3(x, y, 0.0)
+    #             scale = Vector3(0.1, 0.1, 0.1)
+    #             color = [0, 1, 0, 1]  # green color
+    #             lifetime = 1.0
+    #             depth = 0.0
+    #             draw.add_cuboid(position, scale, color, lifetime, depth)
+    #         self.kit.update()
+        
 
     def run_simulation(self):
         # data inputs for the theia agent
-        theia_bearing_values, theia_range_values, theia_dx_values, theia_dtheta_values = self.read_data_from_file('src\TheiaSLAM\data\data.txt')
+        theia_bearing_values, theia_range_values, theia_dx_values, theia_dtheta_values = self.read_data_from_file('data\data.txt')
         # data inputs for the forklift agent
-        forklift_bearing_values, forklift_range_values, forklift_dx_values, forklift_dtheta_values = self.read_data_from_file('src\TheiaSLAM\data\gen_data.txt')
+        forklift_bearing_values, forklift_range_values, forklift_dx_values, forklift_dtheta_values = self.read_data_from_file('data\gen_data.txt')
 
         # print the control inputs
         # print("Theia Control Inputs:")
@@ -405,6 +403,15 @@ class SLAMSimulationHandler:
         
         print("Theia and Forklift have reached the end of the control inputs")
 
+        # add the estimated landmarks to the simulation
+        # estimated_landmarks = [(2.988, 6.031),
+        #                        (3.010, 12.034),
+        #                        (7.015, 7.981),
+        #                        (7.006, 14),
+        #                        (10.996, 5.997),
+        #                        (11.032, 11.969)]
+        # self.visualize_ekf_estimated_landmarks(estimated_landmarks)
+
 
     def run(self) -> None:
         # main loop to run the simulation
@@ -413,3 +420,6 @@ class SLAMSimulationHandler:
 
         omni.timeline.get_timeline_interface().stop()
         self.kit.close()
+
+# commendline to run the simulation:
+# python isaac_python.py

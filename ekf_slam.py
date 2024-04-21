@@ -1,40 +1,21 @@
+# EKF code from HW2
+
 '''
     Initially written by Ming Hsiao in MATLAB
     Adapted to Python by Akash Sharma (akashsharma@cmu.edu), 2020
     Updated by Wei Dong (weidong@andrew.cmu.edu), 2021
 '''
+'''
+    The EKF Algorithm : implementaion by Ryan Wu for 16-833 HW2.
+    References: Probabilistic Robotics by Thrun et al.
+                24-677 Modern Control Theory (Personal Past Class Projects)
+'''
 
 import numpy as np
-import math
 import re
 import matplotlib.pyplot as plt
 np.set_printoptions(suppress=True, threshold=np.inf, linewidth=np.inf)
-def _h (X, k):
-    
-    # extract pose x y theta
-    x, y, theta = X[:3].ravel()
-    
-    # initialize measurement function h
-    h = np.zeros((2 * k, 1))
-    
-    # loop calculation for each landmark
-    for i in range(k):
-        # landmark position
-        lx, ly = X[3 + 2 * i:3 + 2 * i + 2].ravel()
-        
-        # calculate the expected landmark measurements
-        dx = lx - x
-        dy = ly - y
-        pow_dxdy = dx**2 + dy**2
-        sqr_dxdy = np.sqrt(pow_dxdy)
-        b_hat = np.arctan2(dy, dx) - theta
-        r_hat = sqr_dxdy
-        
-        # update the measurement function h
-        h[2 * i] = warp2pi(b_hat)
-        h[2 * i + 1] = r_hat
 
-    return h
 
 def draw_cov_ellipse(mu, cov, color):
     """
@@ -72,6 +53,7 @@ def draw_traj_and_pred(X, P):
     """
     draw_cov_ellipse(X[0:2], P[0:2, 0:2], 'm')
     plt.draw()
+    plt.waitforbuttonpress(0)
 
 
 def draw_traj_and_map(X, last_X, P, t):
@@ -101,36 +83,8 @@ def draw_traj_and_map(X, last_X, P, t):
                                               3 + 2 * k:3 + 2 * k + 2], 'g')
 
     plt.draw()
-    #plt.waitforbuttonpress(0)
+    plt.waitforbuttonpress(0)
 
-def G_draw_traj_and_map(X, last_X, P, t):
-    """Draw Trajectory and map
-
-    :X: Current state
-    :last_X: Previous state
-    :P: Covariance
-    :t: timestep
-    :returns: None
-
-    """
-    plt.ion()
-    draw_cov_ellipse(X[0:2], P[0:2, 0:2], 'g')
-    plt.plot([last_X[0], X[0]], [last_X[1], X[1]], c='k', linewidth=0.75)
-    plt.plot(X[0], X[1], '*k')
-
-    if t == 0:
-        for k in range(6):
-            draw_cov_ellipse(
-                X[3 + k * 2:3 + k * 2 + 2], P[3 + k * 2:3 + 2 * k + 2,
-                                              3 + 2 * k:3 + 2 * k + 2], 'y')
-    else:
-        for k in range(6):
-            draw_cov_ellipse(
-                X[3 + k * 2:3 + k * 2 + 2], P[3 + 2 * k:3 + 2 * k + 2,
-                                              3 + 2 * k:3 + 2 * k + 2], 'y')
-
-    plt.draw()
-    #plt.waitforbuttonpress(0)
 
 def warp2pi(angle_rad):
     """
@@ -139,10 +93,38 @@ def warp2pi(angle_rad):
     \param angle_rad Input angle in radius
     \return angle_rad_warped Warped angle to [-\pi, \pi].
     """
-    angle_rad = angle_rad % (2 * np.pi)#wrap to 2pi
-    if(angle_rad > np.pi):
-        angle_rad = -2 * np.pi + angle_rad
+    angle_rad = angle_rad - 2 * np.pi * np.floor((angle_rad + np.pi) / (2 * np.pi))
+
     return angle_rad
+
+# non-linear measurement fucntion
+def _h (X, k):
+    
+    # extract pose x y theta
+    x, y, theta = X[:3].ravel()
+    
+    # initialize measurement function h
+    h = np.zeros((2 * k, 1))
+    
+    # loop calculation for each landmark
+    for i in range(k):
+        # landmark position
+        lx, ly = X[3 + 2 * i:3 + 2 * i + 2].ravel()
+        
+        # calculate the expected landmark measurements
+        dx = lx - x
+        dy = ly - y
+        pow_dxdy = dx**2 + dy**2
+        sqr_dxdy = np.sqrt(pow_dxdy)
+        b_hat = np.arctan2(dy, dx) - theta
+        r_hat = sqr_dxdy
+        
+        # update the measurement function h
+        h[2 * i] = warp2pi(b_hat)
+        h[2 * i + 1] = r_hat
+
+    return h
+
 
 def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
     '''
@@ -188,6 +170,8 @@ def init_landmarks(init_measure, init_measure_cov, init_pose, init_pose_cov):
         landmark_cov[2 * i:2 * i + 2, 2 * i:2 * i + 2] = Lp @ init_measure_cov @ Lp.T + Ll @ init_pose_cov @ Ll.T
 
     return k, landmark, landmark_cov
+
+
 def predict(X, P, control, control_cov, k):
     '''
     TODO: predict step in EKF SLAM with derived Jacobians.
@@ -238,6 +222,7 @@ def predict(X, P, control, control_cov, k):
     P_pre = Gt @ P @ Gt.T + At @ control_cov_expand @ At.T
     
     return X_pre, P_pre
+
 
 def update(X_pre, P_pre, measure, measure_cov, k):
     '''
@@ -301,7 +286,6 @@ def update(X_pre, P_pre, measure, measure_cov, k):
     P = (np.eye(3 + 2 * k) - Kt @ Ht) @ P_pre
 
     return X, P
- 
 
 
 def evaluate(X, P, k):
@@ -314,182 +298,43 @@ def evaluate(X, P, k):
 
     \return None
     '''
+    # ground truth landmarks
     l_true = np.array([3, 6, 3, 12, 7, 8, 7, 14, 11, 6, 11, 12], dtype=float)
-    plt.scatter(l_true[0::2], l_true[1::2], c = "y")
-    plt.draw()
-    while not plt.waitforbuttonpress(): pass
-
-    err = l_true - X[3:].reshape(-1)
-    euclidean = []
-    mahalanobis = []
+    
+    # loop Euclidean and Mahalanobis calculation for each landmark
     for i in range(k):
-        xerr, yerr = err[i*2:i*2+2]
-        euclidean.append(np.linalg.norm([xerr, yerr]))
-        print("For ", i, "th waypoint, ")
-        print("Euclidean error is", euclidean[-1])
-        errs = np.array([xerr, yerr])
-        cov = P[3+i*2:3+i*2+2, 3+i*2:3+i*2+2]
-        mahalanobis.append(math.sqrt(errs @ np.linalg.inv(cov) @ errs.T))
-        print("mahalanobis error is", mahalanobis[-1])
-        continue
+        lx, ly = X[3 + 2 * i:3 + 2 * i + 2].ravel()
+        euc = np.linalg.norm(l_true[2 * i:2 * i + 2] - np.array([lx, ly]), 2)
+        mah = np.sqrt((l_true[2 * i:2 * i + 2] - np.array([lx, ly])).T @ np.linalg.inv(P[3 + 2 * i:3 + 2 * i + 2, 3 + 2 * i:3 + 2 * i + 2]) @ (l_true[2 * i:2 * i + 2] - np.array([lx, ly])))
+        print(f"Landmark {i+1}:")
+        print(f"\tEuclidean distance: {euc}")
+        print(f"\tMahalanobis distance: {mah}")
 
-class Agent():
-    def __init__(self, file_name, control_cov, measure_cov):
-        #initialize for every agent base on first measurements
-        self.data = open(file_name).readlines()
-        self.control_cov = control_cov
-        self.measure_cov = measure_cov
-        pose = np.zeros((3, 1))
-        pose_cov = np.diag([0.02**2, 0.02**2, 0.1**2])
-        line = self.data[0]
-        fields = re.split('[\t ]', line)[:-1]
-        arr = np.array([float(field) for field in fields])
-        measure = np.expand_dims(arr, axis=1)
-        k, landmark, landmark_cov = init_landmarks(measure, measure_cov, pose,
-                                               pose_cov)
-        self.X = np.vstack((pose, landmark))
-        self.P = np.block([[pose_cov, np.zeros((3, 2 * k))],
-                    [np.zeros((2 * k, 3)), landmark_cov]])
-        self.k = k
-        self.t = 1
-        self.last_X = self.X
-        self.X_pre = np.zeros([3+2*k, 1])
-        self.P_pre = np.zeros([3+2 * k, 3 + 2 * k])
-        
-    #Use original predict and update functions
-    # def predict():
-    #     return;
-    # def update():
-    #     return;
-    def step(self, i):
-        line = self.data[i]
-        fields = re.split('[\t ]', line)[:-1]
-        arr = np.array([float(field) for field in fields])
-        # Control
-        if arr.shape[0] == 2:
-            print(f'{self.t}: Predict step')
-            d, alpha = arr[0], arr[1]
-            control = np.array([[d], [alpha]])
+    # print the final state converiance matrix P
+    # print ("P" , P)
 
-            ##########
-            # TODO: predict step in EKF SLAM
-            self.X_pre, self.P_pre = predict(self.X, self.P, control, self.control_cov, self.k)
+    plt.scatter(l_true[0::2], l_true[1::2])
+    plt.draw()
+    plt.waitforbuttonpress(0)
 
-            draw_traj_and_pred(self.X_pre, self.P_pre)
-
-        # Measurement
-        else:
-            print(f'{self.t}: Update step')
-            measure = np.expand_dims(arr, axis=1)
-
-            ##########
-            # TODO: update step in EKF SLAM
-            self.X, self.P = update(self.X_pre, self.P_pre, measure, self.measure_cov, self.k)
-
-            draw_traj_and_map(self.X, self.last_X, self.P, self.t)
-            self.last_X = self.X
-            self.t += 1
-        # self.X = X
-        # self.P = P
-        
-
-
-    
-
-def multi_main():
-    # Setup: same as original EKF
-
-    # TEST: Setup uncertainty parameters
-    sig_x = 0.25
-    sig_y = 0.1
-    sig_alpha = 0.1
-    sig_beta = 0.01
-    sig_r = 0.08
-
-    # sig_x = 2.5
-    # sig_y *= 10
-    # sig_alpha *= 10
-    # sig_beta *= 10
-    # sig_r *= 10q
-
-
-    # Generate variance from standard deviation
-    sig_x2 = sig_x**2
-    sig_y2 = sig_y**2
-    sig_alpha2 = sig_alpha**2
-    sig_beta2 = sig_beta**2
-    sig_r2 = sig_r**2
-
-    # Open data file and read the initial measurements
-    data_file = open("src\TheiaSLAM\data\data.txt")
-    line = data_file.readline()
-    fields = re.split('[\t ]', line)[:-1]
-    arr = np.array([float(field) for field in fields])
-    measure = np.expand_dims(arr, axis=1)
-    t = 1
-
-    # Setup control and measurement covariance
-    control_cov = np.diag([sig_x2, sig_y2, sig_alpha2])
-    measure_cov = np.diag([sig_beta2, sig_r2])
-
-    # Setup the initial pose vector and pose uncertainty
-    pose = np.zeros((3, 1))
-    pose_cov = np.diag([0.02**2, 0.02**2, 0.1**2])
-
-    num_agent = 2
-    agent_l = []
-
-    
-    # Initialize every agent
-    a0 = Agent("src\TheiaSLAM\data\data.txt", control_cov, measure_cov)
-    a1 = Agent("src\TheiaSLAM\data\gen_data2.txt", control_cov, measure_cov)
-    a2 = Agent("src\TheiaSLAM\data\gen_datab1.txt", control_cov, measure_cov)
-    agent_l.append(a0)
-    agent_l.append(a1)
-    # agent_l.append(a2)
-    global_last_X = a0.X
-    # In for loop, call predict and update for every agent5
-    for i in range(1,len(data_file.readlines())):
-        counter = 0
-        for agent in agent_l:#step each agent
-            print(counter)
-            counter += 1
-            agent.step(i)
-        global_X = np.zeros_like(agent_l[0].X)
-        global_P = np.zeros_like(agent_l[0].P)
-        for agent in agent_l:#take simple average as global estimation
-            global_X += agent.X
-            global_P += agent.P
-        global_X = global_X / len(agent_l)
-        global_P = global_P / len(agent_l)
-        G_draw_traj_and_map(global_X, global_last_X, global_P, agent_l[0].t) 
-        global_last_X = global_X
-    print("\n Evalutating Agent 0")
-    evaluate(a0.X, a0.P, a0.k)
-    print("\n Evalutating Agent 1")
-    evaluate(a1.X, a1.P, a1.k)
-    print("\n Evalutating Agent 2")
-    evaluate(a2.X, a2.P, a2.k)
-    print("\n Evalutating Global")   
-    evaluate(global_X, global_P, a0.k)       
-
-
-
-    return
 
 def main():
     # TEST: Setup uncertainty parameters
     sig_x = 0.25
-    sig_y = 0.1
-    sig_alpha = 0.1
-    sig_beta = 0.01
-    sig_r = 0.08
-
     # sig_x = 2.5
-    # sig_y *= 10
-    # sig_alpha *= 10
-    # sig_beta *= 10
-    # sig_r *= 10
+    # sig_x = 0.025
+    sig_y = 0.1
+    # sig_y = 1
+    # sig_y = 0.01
+    sig_alpha = 0.1
+    # sig_alpha = 1
+    # sig_alpha = 0.01
+    sig_beta = 0.01
+    # sig_beta = 0.1
+    # sig_beta = 0.001
+    sig_r = 0.08
+    # sig_r = 0.8
+    # sig_r = 0.008
 
 
     # Generate variance from standard deviation
@@ -500,7 +345,7 @@ def main():
     sig_r2 = sig_r**2
 
     # Open data file and read the initial measurements
-    data_file = open("src\TheiaSLAM\data\data.txt")
+    data_file = open("data/data.txt")
     line = data_file.readline()
     fields = re.split('[\t ]', line)[:-1]
     arr = np.array([float(field) for field in fields])
@@ -563,6 +408,5 @@ def main():
     # EVAL: Plot ground truth landmarks and analyze distances
     evaluate(X, P, k)
 
-
 if __name__ == "__main__":
-    multi_main()
+    main()

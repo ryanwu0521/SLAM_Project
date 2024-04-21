@@ -1,1 +1,0 @@
-# takes in the ground truth landmarks position and control inputs (from Isaac Sim) and add noise to them for EKF SLAM
