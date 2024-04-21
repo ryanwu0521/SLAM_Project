@@ -14,6 +14,7 @@ import numpy as np
 import time
 import carb 
 import re
+from math import radians, sin, cos
 
 import cTheiaSLAM as c 
 from map_generator import MapGenerator
@@ -160,34 +161,80 @@ class SLAMSimulationHandler:
         if hasattr(self, 'theia_prim'):
             # move theia
             theia_position = self.theia_prim.get_position()
-            theia_orentation = self.theia_prim.get_orientation()
+            theia_orientation = self.theia_prim.get_orientation()
 
             # calculate the new position
-            orientation_quat = Rotation.from_quat(theia_orentation)
+            orientation_quat = Rotation.from_quat(theia_orientation)
             orientation_matrix = orientation_quat.as_matrix()
             forward_direction = np.dot(orientation_matrix, np.array([1, 0, 0]))
-            new_theia_position = [theia_position[0] + theia_dx * forward_direction[0], theia_position[1] + theia_dx * forward_direction[1], theia_position[2]]
+            new_theia_position = [theia_position[0] + theia_dx * forward_direction[0], 
+                                  theia_position[1] + theia_dx * forward_direction[1], 
+                                  theia_position[2] + theia_dx * forward_direction[2]]
 
             # calculate the new orientation
-            current_theia_orientation = orientation_quat.as_euler('xyz', degrees = False)
-            current_theia_orientation[0] += theia_dtheta
-            new_theia_orientation = Rotation.from_euler('xyz', current_theia_orientation, degrees = False).as_quat()
+            # current_theia_orientation = list(orientation_quat.as_euler('xyz', degrees = False))
+            # print("Current orientation before update:", current_theia_orientation)
+            # current_theia_orientation[0] += theia_dtheta
+            # current_theia_orientation[0] %= 2 * np.pi
+            # new_theia_orientation = Rotation.from_euler('xyz', current_theia_orientation, degrees = False).as_quat()
+            # print("New orientation:", new_theia_orientation)
 
-            # update the theia prim position and orientation
-            self.theia_prim.set_position(new_theia_position)
-            self.theia_prim.set_orientation(new_theia_orientation)
+            # calculate the new orientation
+            current_euler = list(orientation_quat.as_euler('xyz', degrees = False)) 
+            current_heading = current_euler[2]
+            new_heading = current_heading + theia_dtheta
+            new_theia_orientation= Rotation.from_euler('xyz', [0, 0, new_heading], degrees = False).as_quat()
+            # new_orientation_quat = self.quaternion_from_axis_angle(axis, theia_dtheta)
+            # new_theia_orientation = Rotation.multiply_quaternions(theia_orientation, new_orientation_quat)
+            print("New orientation:", new_theia_orientation)
+
+            # # update the theia prim position and orientation
+            # self.theia_prim.set_position(new_theia_position)
+            # self.theia_prim.set_orientation(new_theia_orientation)
+
+            # update the pose using the Pose class helper functions
+            theia_pose = Pose(np.array(new_theia_position), Rotation.from_quat(new_theia_orientation))
+            self.theia_prim.set_position(theia_pose.get_position())
+            self.theia_prim.set_orientation(theia_pose.get_orientation().as_quat())
 
             # update the theia world position
             self.sync_world_position(self.theia_prim, new_theia_position, new_theia_orientation)
 
             # generate the local trajectory
-            # self.generate_local_trajectory(new_theia_position)
+            self.generate_local_trajectory(new_theia_position)
             
             # update the simulation to apply changes
             self.kit.update()
         else:
             print("Theia and Forklift Prims not found")
 
+    # def move_agent_controls(self, theia_dx, theia_dtheta):
+    #     if hasattr(self, 'theia_prim'):
+    #         # move theia
+    #         theia_position = self.theia_prim.get_position()
+    #         theia_orientation = self.theia_prim.get_orientation()
+
+    #         for _ in range(5):  # Repeat for 5 sides of the pentagon
+    #             # Move in a straight line
+    #             for _ in range(3):  # Move 3 units straight
+    #                 dx = theia_dx * cos(theia_orientation[2])  # Use current orientation for x component
+    #                 dy = theia_dx * sin(theia_orientation[2])  # Use current orientation for y component
+    #                 theia_position[0] += dx
+    #                 theia_position[1] += dy
+    #                 self.theia_prim.set_position(theia_position)
+    #                 self.sync_world_position(self.theia_prim, theia_position, theia_orientation)
+    #                 self.generate_local_trajectory(theia_position)
+    #                 self.kit.update()
+
+    #             # Turn by 1 unit (1.2566 radians)
+    #             theia_orientation[2] += theia_dtheta
+    #             self.theia_prim.set_orientation(theia_orientation)
+    #             self.sync_world_position(self.theia_prim, theia_position, theia_orientation)
+    #             self.generate_local_trajectory(theia_position)
+    #             self.kit.update()
+            
+    #     else:
+    #         print("Theia Prim not found")
 
     def generate_local_trajectory(self, new_position):
         # calculate the local trajectory for the agent
@@ -203,23 +250,16 @@ class SLAMSimulationHandler:
 
         # set the linear and angular speeds
         linear_speed = self.linear_speed
-        angular_speed = self.angular_speed
-
+    
         # calculate the time required to reach the waypoint
         time_to_waypoint = distance_to_waypoint / linear_speed
-
-        # calculate the change in orientation required to align with the waypoint
-        angle_diff = angle_to_waypoint - self.theia_prim.get_orientation()
-
-        # calculate the angular speed required to turn to the waypoint
-        angular_speed_to_waypoint = angle_diff / time_to_waypoint
 
         # set the robot's orientation to the direction of movement
         new_orientation = Rotation.from_euler('z', [angle_to_waypoint], degrees = False).as_quat()
         self.theia_prim.set_orientation(new_orientation)
 
         # Return the calculated trajectory
-        return distance_to_waypoint, angle_to_waypoint, angular_speed_to_waypoint
+        return distance_to_waypoint, angle_to_waypoint, time_to_waypoint
 
 
     def visualize_ekf_estimated_landmarks(self, estimated_landmarks):
@@ -239,37 +279,36 @@ class SLAMSimulationHandler:
         # print the control inputs
         # print('bearing values:', bearing_values)
         # print('range values:', range_values)
-        print('dx values:', dx_values)
-        print('dtheta values:', dtheta_values)
+        # print('dx values:', dx_values)
+        # print('dtheta values:', dtheta_values)
 
         # create the control inputs for the pentagon trajectory
         theia_control_inputs = zip (dx_values, dtheta_values)
+        theia_measurement_inputs = zip(bearing_values, range_values)
 
-        # flag to check if there are more control inputs
-        has_more_control_inputs = True
-        
-        for i, (theia_dx, theia_dtheta) in enumerate(theia_control_inputs):
+        for theia_dx, theia_dtheta in theia_control_inputs:
             print('Moving Theia with control inputs: ', theia_dx, theia_dtheta)
-            
             # move the theia agent
             self.move_agent_controls(theia_dx, theia_dtheta)
+            # self.move_agent_xy(theia_dx, theia_dtheta)
 
-            # print the theia agent's position and orientation after moving
+            # print the agent position and orientation after moving
             print("Theia's position:", self.theia_prim.get_position())
-            print("Theia's orientation:", self.theia_prim.get_orientation())
-            
-            time.sleep(1)
+            # print("Theia's orientation:", self.theia_prim.get_orientation())
 
-            # check if there are more control inputs
-            if i == len(dx_values) - 1:
-                has_more_control_inputs = False
-                break
-
-        if not has_more_control_inputs:
-            print("Theia has reached the end of the control inputs")
+        # for bearing, range in theia_measurement_inputs:
+        #     print('Moving Theia with measurement inputs: ', bearing, range)
+        #     # move the theia agent
+        #     self.move_agent_measurements(bearing, range)
             
+        #     # print the agent's position and orientation after moving
+        #     print("Theia's position:", self.theia_prim.get_position())
+        #     print("Theia's orientation:", self.theia_prim.get_orientation())
             
-        self.kit.update()
+            # time.sleep(1)
+            self.kit.update()
+        
+        print("Theia has reached the end of the control inputs")
 
 
     def run(self) -> None:
