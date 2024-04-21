@@ -410,7 +410,7 @@ def multi_main():
     # sig_y *= 10
     # sig_alpha *= 10
     # sig_beta *= 10
-    # sig_r *= 10
+    # sig_r *= 10q
 
 
     # Generate variance from standard deviation
@@ -421,7 +421,7 @@ def multi_main():
     sig_r2 = sig_r**2
 
     # Open data file and read the initial measurements
-    data_file = open("data/data.txt")
+    data_file = open("src\TheiaSLAM\data\data.txt")
     line = data_file.readline()
     fields = re.split('[\t ]', line)[:-1]
     arr = np.array([float(field) for field in fields])
@@ -441,9 +441,9 @@ def multi_main():
 
     
     # Initialize every agent
-    a0 = Agent("gen_data1.txt", control_cov, measure_cov)
-    a1 = Agent("gen_data2.txt", control_cov, measure_cov)
-    a2 = Agent("gen_datab1.txt", control_cov, measure_cov)
+    a0 = Agent("src\TheiaSLAM\data\data.txt", control_cov, measure_cov)
+    a1 = Agent("src\TheiaSLAM\data\gen_data2.txt", control_cov, measure_cov)
+    a2 = Agent("src\TheiaSLAM\data\gen_datab1.txt", control_cov, measure_cov)
     agent_l.append(a0)
     agent_l.append(a1)
     # agent_l.append(a2)
@@ -500,7 +500,7 @@ def main():
     sig_r2 = sig_r**2
 
     # Open data file and read the initial measurements
-    data_file = open("data/data.txt")
+    data_file = open("src\TheiaSLAM\data\data.txt")
     line = data_file.readline()
     fields = re.split('[\t ]', line)[:-1]
     arr = np.array([float(field) for field in fields])
