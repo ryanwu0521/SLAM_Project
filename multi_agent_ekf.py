@@ -304,8 +304,15 @@ def update(X_pre, P_pre, measure, measure_cov, k):
 
     return X, P
  
+def printLandMarkPos(X):
+    l = []
+    k = int((len(X) - 3)/2)
+    
+    for i in range(k):
+        l.append(X[3 + i*2:3 + i*2+2])
 
-
+        print(X[3 + i*2][0],", ",  X[3 + i*2+1][0])
+    return l
 def evaluate(X, P, k):
     '''
     TODO: evaluate the performance of EKF SLAM.
@@ -537,6 +544,8 @@ def multi_main():
         print("agent ", i, "  variance (trace of covariance matrix):", trace)
         print("agent ", i, " (determinant of covariance matrix): ",global_det)
 
+    print("printing landmark position global estimate")
+    printLandMarkPos(global_X)
 
     print("\n Evalutating Agent 0")
     evaluate(a0.X, a0.P, a0.k)
