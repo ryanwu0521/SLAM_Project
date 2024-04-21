@@ -112,6 +112,7 @@ def draw_traj_and_map(X, last_X, P, t):
     plt.draw()
     #plt.waitforbuttonpress(0)
 
+#  G_draw_traj_and_map(global_X, global_last_X, global_P, agent_l[0].t)
 def G_draw_traj_and_map(X, last_X, P, t):
     """Draw Trajectory and map
 
@@ -125,6 +126,7 @@ def G_draw_traj_and_map(X, last_X, P, t):
     plt.ion()
     draw_cov_ellipse(X[0:2], P[0:2, 0:2], 'g')
     plt.plot([last_X[0], X[0]], [last_X[1], X[1]], c='k', linewidth=0.75)
+    # plt.plot([last_X[0], 0], [last_X[1], 1], c='k', linewidth=0.75)
     plt.plot(X[0], X[1], '*k')
 
     if t == 0:
@@ -302,7 +304,7 @@ def predict2(X, P, control, control_cov, k):
     # extract control inputs delta and alpha
     delta, alpha = control.ravel()
 
-    # initialize state vector X and Convariance matrix P
+    # initialize state vector X and Covariance matrix P
     X_pre = np.zeros((3 + 2 * k, 1))
     P_pre = np.zeros((3 + 2 * k, 3 + 2 * k))
 
@@ -572,7 +574,8 @@ def multi_main():
                 
 
             # We need to normalize the weights for each landmark. 
-            row_sums = np.sum(weights, axis=1)
+            row_sums = np.sum(weights, axis=1, keepdims=True)
+            print(f'row sums has shape {row_sums.shape}')
             weights /= row_sums
             
             # We will now combine the state vectors into one state vector.
@@ -595,7 +598,7 @@ def multi_main():
                 agent_i_curr_pose = agent_i.X[:3]
 
                 agent_i.X = global_X
-                agent_i[:3] = agent_i_curr_pose
+                agent_i.X[:3] = agent_i_curr_pose
 
     
 
