@@ -422,4 +422,4 @@ class SLAMSimulationHandler:
         self.kit.close()
 
 # commendline to run the simulation:
-# python isaac_python.py
+# python isaac_python.py   
