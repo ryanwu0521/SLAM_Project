@@ -14,6 +14,7 @@ import numpy as np
 import time
 import carb 
 import re
+import math
 from math import radians, sin, cos
 
 import cTheiaSLAM as c 
@@ -66,7 +67,7 @@ class SLAMSimulationHandler:
 
         # load the agents into the world
         self.theia_prim = self.load_theia_usd()
-        # self.forklift_prim = self.load_forklift_usd()
+        self.forklift_prim = self.load_forklift_usd()
 
         # set agent motion speed
         self.linear_speed = 1.0
@@ -82,19 +83,12 @@ class SLAMSimulationHandler:
 
     def load_theia_usd(self):
         # define the path to the robot
-        # name = "Theia"
-        # usd_path = "omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/theia_robot/theia_robot.usd"
-        # prim_path = "/World/theia_robot"
-        # height_offset = 0.25
-        # position =[0.0, 0.0, height_offset]
-        # articulation_root = "/World/theia_robot/static/articulation_link"
-
-        name = "Forklift"
-        usd_path = "omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/forklift/forklift.usd"
-        prim_path = "/World/forklift"
+        name = "Theia"
+        usd_path = "omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/theia_robot/theia_robot.usd"
+        prim_path = "/World/theia_robot"
         height_offset = 0.25
-        position = [0.0, 0.0, height_offset]
-        articulation_root = "/World/forklift"
+        position =[0.0, 0.0, height_offset]
+        articulation_root = "/World/theia_robot/static/articulation_link"
         
         # add the robot to the world
         stage_utils.add_reference_to_stage(usd_path, prim_path)
@@ -112,14 +106,14 @@ class SLAMSimulationHandler:
         usd_path = "omniverse://cerlabnucleus.lan.local.cmu.edu/Users/gmetts/theia_isaac_qual/robots/forklift/forklift.usd"
         prim_path = "/World/forklift"
         height_offset = 0.25
-        position = [15.0, 0.0, height_offset]
+        position = [0.0, 0.0, height_offset]
         articulation_root = "/World/forklift"
         
         # add the robot to the world
         stage_utils.add_reference_to_stage(usd_path, prim_path)
 
         # create the robot prim
-        forklift_pose = Pose(np.array(position), Rotation.from_euler('z', [180], True))
+        forklift_pose = Pose(np.array(position), Rotation.from_euler('z', [0], True))
         forklift_prim = CustomXFormPrim(articulation_root, name = name, position = forklift_pose.get_position(), orientation = forklift_pose.get_quat_scalar_first())
 
         return forklift_prim
@@ -157,6 +151,7 @@ class SLAMSimulationHandler:
         return bearing_values, range_values, dx_values, dtheta_values
 
 
+    '''tried to move agent using change in angle but it did not work (quaternion issue)'''
     def move_agent_controls(self, theia_dx, theia_dtheta):
         if hasattr(self, 'theia_prim'):
             # move theia
@@ -208,33 +203,85 @@ class SLAMSimulationHandler:
         else:
             print("Theia and Forklift Prims not found")
 
-    # def move_agent_controls(self, theia_dx, theia_dtheta):
-    #     if hasattr(self, 'theia_prim'):
-    #         # move theia
-    #         theia_position = self.theia_prim.get_position()
-    #         theia_orientation = self.theia_prim.get_orientation()
 
-    #         for _ in range(5):  # Repeat for 5 sides of the pentagon
-    #             # Move in a straight line
-    #             for _ in range(3):  # Move 3 units straight
-    #                 dx = theia_dx * cos(theia_orientation[2])  # Use current orientation for x component
-    #                 dy = theia_dx * sin(theia_orientation[2])  # Use current orientation for y component
-    #                 theia_position[0] += dx
-    #                 theia_position[1] += dy
-    #                 self.theia_prim.set_position(theia_position)
-    #                 self.sync_world_position(self.theia_prim, theia_position, theia_orientation)
-    #                 self.generate_local_trajectory(theia_position)
-    #                 self.kit.update()
+    def calculate_turn_position(self, control_inputs):
+        x, y, theta = 0, 0, 0
+        positions = [(x, y)]
 
-    #             # Turn by 1 unit (1.2566 radians)
-    #             theia_orientation[2] += theia_dtheta
-    #             self.theia_prim.set_orientation(theia_orientation)
-    #             self.sync_world_position(self.theia_prim, theia_position, theia_orientation)
-    #             self.generate_local_trajectory(theia_position)
-    #             self.kit.update()
-            
-    #     else:
-    #         print("Theia Prim not found")
+        for dx, dtheta in control_inputs:
+            dx_new = dx * math.cos(theta)
+            dy_new = dx * math.sin(theta)
+            x += dx_new
+            y += dy_new
+            theta += dtheta
+            positions.append((x, y))
+
+        return positions
+
+
+    def move_theia_to_position(self, theia_dx, theia_dy):
+        if hasattr(self, 'theia_prim'):
+            # move theia
+            theia_position = self.theia_prim.get_position()
+            theia_orientation = self.theia_prim.get_orientation()
+
+            # calculate the change in x and y
+            theia_dx_new = theia_dx - theia_position[0]
+            theia_dy_new = theia_dy - theia_position[1]
+
+            # calculate the new position
+            new_theia_position = [
+                theia_position[0] + theia_dx_new,
+                theia_position[1] + theia_dy_new,
+                theia_position[2]
+            ]
+
+            # update the theia prim position and orientation
+            self.theia_prim.set_position(new_theia_position)
+
+            # update the theia world position
+            self.sync_world_position(self.theia_prim, new_theia_position, theia_orientation)
+
+            # generate the local trajectory
+            self.generate_local_trajectory(new_theia_position)
+
+            # update the simulation to apply changes
+            self.kit.update()
+        else:
+            print("Theia Prim not found")
+
+
+    def move_forklift_to_position(self, forklift_dx, forklift_dy):
+        if hasattr(self, 'forklift_prim'):
+            # move forklift
+            forklift_position = self.forklift_prim.get_position()
+            forklift_orientation = self.forklift_prim.get_orientation()
+
+            # calculate the change in x and y
+            forklift_dx_new = forklift_dx - forklift_position[0]
+            forklift_dy_new = forklift_dy - forklift_position[1]
+
+            # calculate the new position
+            new_forklift_position = [
+                forklift_position[0] + forklift_dx_new,
+                forklift_position[1] + forklift_dy_new,
+                forklift_position[2]
+            ]
+
+            # update the forklift prim position and orientation
+            self.forklift_prim.set_position(new_forklift_position)
+
+            # update the forklift world position
+            self.sync_world_position(self.forklift_prim, new_forklift_position, forklift_orientation)
+
+            # generate the local trajectory
+            self.generate_local_trajectory(new_forklift_position)
+
+            # update the simulation to apply changes
+            self.kit.update()
+        else:
+            print("Forklift Prim not found")
+
 
     def generate_local_trajectory(self, new_position):
         # calculate the local trajectory for the agent
@@ -274,26 +321,74 @@ class SLAMSimulationHandler:
 
     def run_simulation(self):
         # data inputs for the theia agent
-        bearing_values, range_values, dx_values, dtheta_values = self.read_data_from_file('src\TheiaSLAM\data\data.txt')
-        
+        theia_bearing_values, theia_range_values, theia_dx_values, theia_dtheta_values = self.read_data_from_file('src\TheiaSLAM\data\data.txt')
+        # data inputs for the forklift agent
+        forklift_bearing_values, forklift_range_values, forklift_dx_values, forklift_dtheta_values = self.read_data_from_file('src\TheiaSLAM\data\gen_data.txt')
+
         # print the control inputs
-        # print('bearing values:', bearing_values)
-        # print('range values:', range_values)
-        # print('dx values:', dx_values)
-        # print('dtheta values:', dtheta_values)
+        # print("Theia Control Inputs:")
+        # print("dx values:", theia_dx_values)
+        # print("dtheta values:", theia_dtheta_values)
 
-        # create the control inputs for the pentagon trajectory
-        theia_control_inputs = zip (dx_values, dtheta_values)
-        theia_measurement_inputs = zip(bearing_values, range_values)
+        # print("Forklift Control Inputs:")
+        # print("dx values:", forklift_dx_values)
+        # print("dtheta values:", forklift_dtheta_values)
 
-        for theia_dx, theia_dtheta in theia_control_inputs:
-            print('Moving Theia with control inputs: ', theia_dx, theia_dtheta)
+        # read the control inputs for the theia agent
+        theia_control_inputs = zip (theia_dx_values, theia_dtheta_values)
+        # theia_measurement_inputs = zip( theia_bearing_values, theia_range_values)
+
+        # read the control inputs for the forklift agent
+        forklift_control_inputs = zip (forklift_dx_values, forklift_dtheta_values)
+
+        # calculate the theia turning points based on the control inputs
+        theia_turning_points = self.calculate_turn_position(theia_control_inputs)
+
+        # calculate the forklift turning points based on the control inputs
+        forklift_turning_points = self.calculate_turn_position(forklift_control_inputs)
+
+        '''Move both agents at the same time'''
+        # iterate through the maximum number of steps for either agent
+        # max_steps = max(len(theia_turning_points), len(forklift_turning_points))
+        # for step in range(max_steps):
+        #     # move Theia 
+        #     if step < len(theia_turning_points):
+        #         theia_dx, theia_dy = theia_turning_points[step]
+        #         print('Moving Theia to x, y:', theia_dx, theia_dy)
+        #         self.move_theia_to_position(theia_dx, theia_dy)
+        #         print("Theia's position:", self.theia_prim.get_position())
+
+        #     # move Forklift
+        #     if step < len(forklift_turning_points):
+        #         forklift_dx, forklift_dy = forklift_turning_points[step]
+        #         print('Moving Forklift to x, y:', forklift_dx, forklift_dy)
+        #         self.move_forklift_to_position(forklift_dx, forklift_dy)
+        #         print("Forklift's position:", self.forklift_prim.get_position())
+
+        #     # Update the simulation after both agents have moved
+        #     self.kit.update()
+
+        # print("Theia and Forklift have reached the end of the control inputs")
+
+        '''Move Theia first then Forklift'''
+        for theia_dx, theia_dy in theia_turning_points:
+            print('Moving Theia to x, y: ', theia_dx, theia_dy)
             # move the theia agent
-            self.move_agent_controls(theia_dx, theia_dtheta)
+            self.move_theia_to_position(theia_dx, theia_dy)
             # self.move_agent_xy(theia_dx, theia_dtheta)
 
             # print the agent position and orientation after moving
             print("Theia's position:", self.theia_prim.get_position())
+            # print("Theia's orientation:", self.theia_prim.get_orientation())
+
+        for forklift_dx, forklift_dy in forklift_turning_points:
+            print('Moving Forklift to x, y: ', forklift_dx, forklift_dy)
+            # move the forklift agent
+            self.move_forklift_to_position(forklift_dx, forklift_dy)
+            # self.move_agent_xy(theia_dx, theia_dtheta)
+
+            # print the agent position and orientation after moving
+            print("Forklift's position:", self.forklift_prim.get_position())
             # print("Theia's orientation:", self.theia_prim.get_orientation())
 
         # for bearing, range in theia_measurement_inputs:
@@ -308,7 +403,7 @@ class SLAMSimulationHandler:
             # time.sleep(1)
             self.kit.update()
         
-        print("Theia has reached the end of the control inputs")
+        print("Theia and Forklift have reached the end of the control inputs")
 
 
     def run(self) -> None:
