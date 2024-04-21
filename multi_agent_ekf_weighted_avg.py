@@ -112,6 +112,7 @@ def draw_traj_and_map(X, last_X, P, t):
     plt.draw()
     #plt.waitforbuttonpress(0)
 
+#  G_draw_traj_and_map(global_X, global_last_X, global_P, agent_l[0].t)
 def G_draw_traj_and_map(X, last_X, P, t):
     """Draw Trajectory and map
 
@@ -125,6 +126,7 @@ def G_draw_traj_and_map(X, last_X, P, t):
     plt.ion()
     draw_cov_ellipse(X[0:2], P[0:2, 0:2], 'g')
     plt.plot([last_X[0], X[0]], [last_X[1], X[1]], c='k', linewidth=0.75)
+    # plt.plot([last_X[0], 0], [last_X[1], 1], c='k', linewidth=0.75)
     plt.plot(X[0], X[1], '*k')
 
     if t == 0:
@@ -302,7 +304,7 @@ def predict2(X, P, control, control_cov, k):
     # extract control inputs delta and alpha
     delta, alpha = control.ravel()
 
-    # initialize state vector X and Convariance matrix P
+    # initialize state vector X and Covariance matrix P
     X_pre = np.zeros((3 + 2 * k, 1))
     P_pre = np.zeros((3 + 2 * k, 3 + 2 * k))
 
@@ -553,7 +555,7 @@ def multi_main():
 
             # Now all agents have done their predict and update steps, so we want to modify the landmark vectors. 
             global_X = np.zeros_like(agent_l[0].X)
-            # global_P = np.zeros_like(agent_l[0].P)
+            global_P = np.zeros_like(agent_l[0].P)
 
             # We are technically breaking this down by x and y landmarks.
             weights = np.zeros((num_landmarks, num_agent))
@@ -566,15 +568,14 @@ def multi_main():
             for landmark_ind in range(num_landmarks):
                 for agent_ind in range(num_agent):
                     cov_agent = agent_l[agent_ind].P
-                    norm = np.linalg.norm(cov_agent[3 + landmark_ind, :])
-                    
+                    norm = np.linalg.norm(cov_agent[3 + landmark_ind * 2 : 3 + landmark_ind * 2 + 1, :])                    
                     weights[landmark_ind, agent_ind] = norm
                 
 
             # We need to normalize the weights for each landmark. 
-            row_sums = np.sum(weights, axis=1)
-            weights = (weights.T / row_sums).T
-            # weights /= row_sums
+            row_sums = np.sum(weights, axis=1, keepdims=True)
+            print(f'row sums has shape {row_sums.shape}')
+            weights /= row_sums
             
             # We will now combine the state vectors into one state vector.
             for landmark_ind in range(num_landmarks):
@@ -596,7 +597,7 @@ def multi_main():
                 agent_i_curr_pose = agent_i.X[:3]
 
                 agent_i.X = global_X
-                agent_i[:3] = agent_i_curr_pose
+                agent_i.X[:3] = agent_i_curr_pose
 
     
 
@@ -631,8 +632,8 @@ def multi_main():
     evaluate(a0.X, a0.P, a0.k)
     print("\n Evaluating Agent 1")
     evaluate(a1.X, a1.P, a1.k)
-    #print("\n Evaluating Global")   
-    #evaluate(global_X, global_P, a0.k)       
+    print("\n Evaluating Global")   
+    evaluate(global_X, global_P, a0.k)       
 
 
 

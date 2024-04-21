@@ -70,8 +70,9 @@ def draw_traj_and_pred(X, P):
     :returns: None
 
     """
-    draw_cov_ellipse(X[0:2], P[0:2, 0:2], 'm')
-    plt.draw()
+    #draw_cov_ellipse(X[0:2], P[0:2, 0:2], 'm')
+    #plt.draw()
+    return
 
 
 def draw_traj_and_map(X, last_X, P, t):
@@ -114,20 +115,21 @@ def G_draw_traj_and_map(X, last_X, P, t):
 
     """
     plt.ion()
-    draw_cov_ellipse(X[0:2], P[0:2, 0:2], 'g')
-    plt.plot([last_X[0], X[0]], [last_X[1], X[1]], c='k', linewidth=0.75)
-    plt.plot(X[0], X[1], '*k')
+    # draw_cov_ellipse(X[0:2], P[0:2, 0:2], 'g')
+    # plt.plot([last_X[0], X[0]], [last_X[1], X[1]], c='k', linewidth=0.75)
+    # plt.plot(X[0], X[1], '*k')
 
-    if t == 0:
-        for k in range(6):
-            draw_cov_ellipse(
-                X[3 + k * 2:3 + k * 2 + 2], P[3 + k * 2:3 + 2 * k + 2,
-                                              3 + 2 * k:3 + 2 * k + 2], 'y')
+    if t <26:
+        # for k in range(6):
+        #     draw_cov_ellipse(
+        #         X[3 + k * 2:3 + k * 2 + 2], P[3 + k * 2:3 + 2 * k + 2,
+        #                                       3 + 2 * k:3 + 2 * k + 2], 'r')
+        pass
     else:
         for k in range(6):
             draw_cov_ellipse(
                 X[3 + k * 2:3 + k * 2 + 2], P[3 + 2 * k:3 + 2 * k + 2,
-                                              3 + 2 * k:3 + 2 * k + 2], 'y')
+                                              3 + 2 * k:3 + 2 * k + 2], 'r')
 
     plt.draw()
     #plt.waitforbuttonpress(0)
@@ -325,13 +327,16 @@ def evaluate(X, P, k):
     for i in range(k):
         xerr, yerr = err[i*2:i*2+2]
         euclidean.append(np.linalg.norm([xerr, yerr]))
-        print("For ", i, "th waypoint, ")
-        print("Euclidean error is", euclidean[-1])
+        # print("For ", i, "th waypoint, ")
+        # print("Euclidean error is", euclidean[-1])
         errs = np.array([xerr, yerr])
         cov = P[3+i*2:3+i*2+2, 3+i*2:3+i*2+2]
         mahalanobis.append(math.sqrt(errs @ np.linalg.inv(cov) @ errs.T))
-        print("mahalanobis error is", mahalanobis[-1])
+        # print("mahalanobis error is", mahalanobis[-1])
         continue
+    print(euclidean)
+    print(mahalanobis)
+    return
 
 class Agent():
     def __init__(self, file_name, control_cov, measure_cov):
@@ -375,7 +380,7 @@ class Agent():
             # TODO: predict step in EKF SLAM
             self.X_pre, self.P_pre = predict(self.X, self.P, control, self.control_cov, self.k)
 
-            draw_traj_and_pred(self.X_pre, self.P_pre)
+            #draw_traj_and_pred(self.X_pre, self.P_pre)
 
         # Measurement
         else:
@@ -391,7 +396,28 @@ class Agent():
             self.t += 1
         # self.X = X
         # self.P = P
-        
+
+def aggregate_covariance_matrices(agent_list):
+    all_information_matrices = [np.linalg.inv(agent.P) for agent in agent_list]
+    global_information_matrix = np.sum(all_information_matrices, axis=0)
+    global_covariance = np.linalg.inv(global_information_matrix)
+    return global_covariance
+
+
+def analyze_global_covariance(global_covariance):
+    # Analyze the global covariance matrix
+    trace = np.trace(global_covariance)
+    eigenvalues, _ = np.linalg.eig(global_covariance)
+    # Perform further analysis as needed
+    return trace, eigenvalues
+
+
+def print_agent_variances(agent_list):
+    for i, agent in enumerate(agent_list):
+        variance = np.trace(agent.P)
+        print(f"Agent {i} variance (trace of covariance matrix): {variance}")
+        variance = np.linalg.det(agent.P)
+        print(f"Agent {i} variance (determinant of covariance matrix): {variance}")        
 
 def compute_weighted_avg(agent_l, num_landmarks):
     num_agent = len(agent_l)
@@ -401,7 +427,7 @@ def compute_weighted_avg(agent_l, num_landmarks):
     for landmark_ind in range(num_landmarks):
         for agent_ind in range(num_agent):
             cov_agent = agent_l[agent_ind].P
-            norm = np.linalg.norm(cov_agent[3 + landmark_ind, :])
+            norm = np.linalg.norm(cov_agent[3 + landmark_ind * 2 : 3 + landmark_ind * 2 + 2, :])
             weights[landmark_ind, agent_ind] = norm
     row_sums = np.sum(weights, axis=1)
     weights = (weights.T / row_sums).T
@@ -410,12 +436,13 @@ def compute_weighted_avg(agent_l, num_landmarks):
         total = 0.0
         for agent_ind in range(num_agent):
             weight = weights[landmark_ind, agent_ind]
-            landmark_value = agent_l[agent_ind].X[3 + landmark_ind]
+            landmark_value = agent_l[agent_ind].X[3 + landmark_ind * 2: 5 + landmark_ind * 2]
 
             total += weight * landmark_value
 
+
             # Weights should be normalized so no need to divide by the sum of weights. 
-        global_X[landmark_ind] = total
+            global_X[3 + 2 * landmark_ind:3 + 2 * landmark_ind +2] = total
     return global_X
 
 def multi_main():
@@ -452,7 +479,9 @@ def multi_main():
 
     # Setup control and measurement covariance
     control_cov = np.diag([sig_x2, sig_y2, sig_alpha2])
-    measure_cov = np.diag([sig_beta2, sig_r2])
+    measure_cov0 = np.diag([0.01**2, 0.09**2])
+    measure_cov1 = np.diag([0.009**2, 0.08**2])
+    measure_cov2 = np.diag([0.008**2, 0.07**2])
 
     # Setup the initial pose vector and pose uncertainty
     pose = np.zeros((3, 1))
@@ -463,14 +492,14 @@ def multi_main():
 
     
     # Initialize every agent
-    a0 = Agent("gen_data1.txt", control_cov, measure_cov)
-    a1 = Agent("gen_data2.txt", control_cov, measure_cov)
-    a2 = Agent("gen_datab1.txt", control_cov, measure_cov)
+    a0 = Agent("dataP0R5B4.txt", control_cov, measure_cov0)
+    a1 = Agent("dataP1R4B3.txt", control_cov, measure_cov1)
+    a2 = Agent("dataP2R3B2.txt", control_cov, measure_cov2)
     agent_l.append(a0)
     agent_l.append(a1)
     agent_l.append(a2)
     global_last_X = a0.X
-    num_landmarks = int(agent_l[0].P.shape[0] - 3) 
+    num_landmarks = int((agent_l[0].P.shape[0] - 3)/2) 
     # In for loop, call predict and update for every agent5
     for i in range(1,len(data_file.readlines())):
         counter = 0
@@ -481,15 +510,34 @@ def multi_main():
         global_X = np.zeros_like(agent_l[0].X)
         global_P = np.zeros_like(agent_l[0].P)
         
-        for agent in agent_l:#take simple average as global estimation
+        for agent in agent_l:#take simple average as global estimation 
             global_X += agent.X
             global_P += agent.P
         global_X = global_X / len(agent_l)
         global_P = global_P / len(agent_l)
-        G_draw_traj_and_map(global_X, global_last_X, global_P, agent_l[0].t) 
+        
 
         global_X = compute_weighted_avg(agent_l, num_landmarks)
+        G_draw_traj_and_map(global_X, global_last_X, global_P, agent_l[0].t) 
+        
         global_last_X = global_X
+
+
+    global_covariance = aggregate_covariance_matrices(agent_l)
+    trace, eigenvalues = analyze_global_covariance(global_covariance)
+    global_det = np.linalg.det(global_covariance)
+    
+
+    print("global variance (trace of covariance matrix):", trace)
+    print("Global variance (determinant of covariance matrix): ",global_det)
+    for i in range(len(agent_l)):
+        c = aggregate_covariance_matrices([agent_l[i]])
+        trace, eigenvalues = analyze_global_covariance(c)
+        global_det = np.linalg.det(c)
+        print("agent ", i, "  variance (trace of covariance matrix):", trace)
+        print("agent ", i, " (determinant of covariance matrix): ",global_det)
+
+
     print("\n Evalutating Agent 0")
     evaluate(a0.X, a0.P, a0.k)
     print("\n Evalutating Agent 1")

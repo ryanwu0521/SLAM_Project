@@ -17,10 +17,16 @@ cmds = [[3,0],[3,0],[3,0], [1,0], [3,0], [1.0, 1.57],
         [3,0],[3,0],[3,0], [1,0], [3,0], [1.0, 0],
         [3,0],[3,0],[3,0], [1,0], [3,0]]
 
-sigd = 0.002
-sigth = 0.002
-sigr = 0.04
-sigbeta = 0.04
+cmds = [[0,1.57],[3,0],[3,0], [1,0], [3,0], [1.0, 1.57],
+        [3,0],[3,0],[3,0], [1,0], [3,0], [1.0, 1.57],
+        [3,0],[3,0],[3,0], [1,0], [3,0], [1.0, 1.57],
+        [3,0],[3,0],[3,0], [1,0], [3,0], [1.0, 0],
+        [3,0],[3,0],[3,0], [1,0], [3,0]]
+
+sigd = 0.001
+sigth = 0.0003
+sigr = 0.03
+sigbeta = 0.02
 data = []
 def calcReading(pos, landmark):
     r = np.linalg.norm([landmark[0]-pos[0], landmark[1] - pos[1]])
@@ -65,7 +71,7 @@ data.append(readings)
 
 print(data)
 
-with open("gen_datab1.txt", 'w') as file:
+with open("dataP2R3B2.txt", 'w') as file:
     for l in data:
         line = "\t".join(format(x, ".4f") for x in l)
         file.write(line + "\t\n")
