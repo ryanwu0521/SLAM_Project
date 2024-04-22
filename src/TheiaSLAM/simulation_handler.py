@@ -303,7 +303,7 @@ class SLAMSimulationHandler:
         # Return the calculated trajectory
         return distance_to_waypoint, angle_to_waypoint, time_to_waypoint
 
-
+    '''The multi-EKF estimated landmarks are too close to ground truth for any meaningful visualization'''
     # def visualize_ekf_estimated_landmarks(self, estimated_landmarks):
     #         draw = _debug_draw.acquire_debug_draw_interface()
     #         # visualize the estimated landmarks
