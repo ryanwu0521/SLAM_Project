@@ -300,7 +300,15 @@ def evaluate(X, P, k):
     '''
     # ground truth landmarks
     l_true = np.array([3, 6, 3, 12, 7, 8, 7, 14, 11, 6, 11, 12], dtype=float)
+
+    # estimated landmark positions from the state vector X
+    l_estimated = X[3:].reshape(-1, 2)
     
+    # print estimated landmark positions
+    print("Estimated Landmark Positions:")
+    for i, landmark in enumerate(l_estimated):
+        print(f"Landmark {i+1}: ({landmark[0]}, {landmark[1]})")
+
     # loop Euclidean and Mahalanobis calculation for each landmark
     for i in range(k):
         lx, ly = X[3 + 2 * i:3 + 2 * i + 2].ravel()
